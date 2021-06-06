@@ -25,24 +25,22 @@ struct MaterialParameters {
 	float4 diffuse;
 };
 
-enum class LightType {
+enum class LightType : int {
 	Disabled = 0,
 	Directional,
 	Point,
-	Specular
+	Spot
 };
 
 struct LightParameters {
-	float3 position;
-
-	float pad1;
-
+	float3 position; float pad1;
 	float4 colorIntensity{ 0.0f };
-	LightType type{ LightType::Disabled };
 
-	float radius;
+	LightType type{ LightType::Disabled }; float3 pad2;
+	float3 direction;
 
-	float2 pad2;
+	float radius, cutOff;
+	float3 pad4;
 };
 
 struct Material {
@@ -91,6 +89,8 @@ public:
 	void drawInstanced(Mesh mesh, Instance* instances, size_t count, Material material);
 
 	void putPointLight(float3 position, float radius, float3 color, float intensity = 1.0f);
+	void putDirectionalLight(float3 direction, float3 color, float intensity = 1.0f);
+	void putSpotLight(float3 position, float3 direction, float radius, float cutOff, float3 color, float intensity = 1.0f);
 
 	void renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh);
 

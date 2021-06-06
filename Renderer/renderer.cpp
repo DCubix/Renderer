@@ -197,3 +197,23 @@ void Renderer::putPointLight(float3 position, float radius, float3 color, float 
 	param.type = LightType::Point;
 	m_lights.push_back(param);
 }
+
+void Renderer::putDirectionalLight(float3 direction, float3 color, float intensity) {
+	LightParameters param{};
+	param.direction = direction;
+	param.radius = 1.0f;
+	param.colorIntensity = float4{ color, intensity };
+	param.type = LightType::Directional;
+	m_lights.push_back(param);
+}
+
+void Renderer::putSpotLight(float3 position, float3 direction, float radius, float cutOff, float3 color, float intensity) {
+	LightParameters param{};
+	param.position = position;
+	param.direction = direction;
+	param.radius = radius;
+	param.cutOff = cutOff;
+	param.colorIntensity = float4{ color, intensity };
+	param.type = LightType::Spot;
+	m_lights.push_back(param);
+}

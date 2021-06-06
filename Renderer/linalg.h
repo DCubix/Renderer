@@ -72,6 +72,10 @@
 #undef max
 #endif
 
+#define PI 3.141592654f
+#define rad(x) ((x) / 180.0f * PI)
+#define deg(x) ((x) / PI * 180.0f)
+
 namespace linalg
 {
     // Small, fixed-length vector type, consisting of exactly M elements of type T, and presumed to be a column-vector unless otherwise noted.

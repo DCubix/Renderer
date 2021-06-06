@@ -94,12 +94,14 @@ public:
 	}
 
 	void onDraw(float elapsedTime) {
-		float s = ::sinf(angle) * 12.0f;
-		float c = ::cosf(angle) * 12.0f;
-		float ys = ::sinf(angle * 3.0f) * 0.5f + 0.5f;
+		float s = ::sinf(angle);
+		float c = ::cosf(angle);
+
+		float s1 = ::sinf(angle + PI);
+		float c1 = ::cosf(angle + PI);
 
 		float4x4 v = linalg::lookat_matrix(float3{ 18.0f, 4.0f, 18.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
-		float4x4 p = linalg::perspective_matrix(50.0f / 180.0f * 3.141592654f, float(width()) / height(), 0.01f, 500.0f);
+		float4x4 p = linalg::perspective_matrix(rad(50.0f), float(width()) / height(), 0.01f, 500.0f);
 		
 		ren.setCamera(v, p);
 		//ren.draw(cube, m);
@@ -108,15 +110,15 @@ public:
 			i.model = linalg::mul(i.model, linalg::rotation_matrix(rot));
 		}
 
-		ren.putPointLight(float3{ c, ys * 5.0f, s }, 8.0f, float3{ 1.0f, 0.3f, 0.0f });
-		ren.putPointLight(float3{ s, (1.0f - ys) * 5.0f, c }, 8.0f, float3{ 0.0f, 0.3f, 1.0f });
-		ren.putPointLight(float3{ s, c, (1.0f - ys) * 5.0f }, 15.0f, float3{ 0.4f, 0.9f, 1.0f });
+		ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
+		ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
+		//ren.putDirectionalLight(float3{ 1.0f, -1.0f, -1.0f }, float3{ 1.0f, 0.9f, 0.0f });
 
 		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
 
 		ren.renderAll(0, 0, width(), height());
 
-		angle += elapsedTime * 0.7f;
+		angle += elapsedTime * 1.7f;
 	}
 
 	Renderer ren;

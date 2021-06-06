@@ -7,15 +7,12 @@ out vec4 fragColor;
 
 struct Light {
 	vec3 position;
-	
-	float pad1;
-
 	vec4 colorIntensity;
+
 	int type; // 0 = disabled, 1 = directional, 2 = point, 3 = specular (TODO)
+	vec3 direction;
 
-	float radius;
-
-	vec2 pad2;
+	float radius, cutOff;
 };
 
 layout (std140) uniform Lights {
@@ -75,13 +72,28 @@ void main() {
 		vec3 L = vec3(0.0);
 		float att = 1.0;
 		if (l.type == 1) {
-			L = normalize(-l.position);
+			L = normalize(-l.direction);
 		} else if (l.type == 2) {
 			L = normalize(l.position - VS.position);
 
 			float len = length(l.position - VS.position);
 			if (len < l.radius)	att = smoothstep(l.radius, 0, len);
 			else att = 0.0;
+		} else if (l.type == 3) {
+			L = normalize(l.position - VS.position);
+
+			float len = length(l.position - VS.position);
+
+			if (len < l.radius)	{
+				att = smoothstep(l.radius, 0, len);
+				float S = dot(L, normalize(-l.direction));
+				float c = cos(l.cutOff);
+				if (S > c) {
+					att *= (1.0 - (1.0 - S) * 1.0 / (1.0 - c));
+				} else {
+					att = 0.0;
+				}
+			} else att = 0.0;
 		}
 
 		vec3 R = normalize(reflect(-L, N));
