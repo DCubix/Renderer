@@ -92,7 +92,7 @@ void ShaderProgram::link() {
 	m_shaders.clear();
 }
 
-inline void ShaderProgram::destroy() {
+void ShaderProgram::destroy() {
 	for (auto& [k, buf] : m_uniformBuffers) {
 		buf.destroy();
 	}

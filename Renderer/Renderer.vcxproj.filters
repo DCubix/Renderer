@@ -40,6 +40,9 @@
     <ClCompile Include="renderer.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="framebuffer.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glad.h">
@@ -81,17 +84,14 @@
     <ClInclude Include="renderer.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="framebuffer.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="shaders.hpp">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="simple.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="default.glsl">
-      <Filter>shaders</Filter>
-    </None>
-    <None Include="default_instanced.glsl">
-      <Filter>shaders</Filter>
-    </None>
     <None Include="default.vert">
       <Filter>shaders</Filter>
     </None>
@@ -101,5 +101,19 @@
     <None Include="default.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="quad.vert">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="ambient_pass.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="lighting_pass.frag">
+      <Filter>shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="gbuffer_pass.frag">
+      <Filter>shaders</Filter>
+    </Text>
   </ItemGroup>
 </Project>

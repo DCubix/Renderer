@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="framebuffer.cpp" />
     <ClCompile Include="game_window.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="aixlog.hpp" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="data_type.h" />
+    <ClInclude Include="framebuffer.h" />
     <ClInclude Include="game_window.h" />
     <ClInclude Include="glad.h" />
     <ClInclude Include="khrplatform.h" />
@@ -162,17 +164,21 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="parser_tools.hpp" />
     <ClInclude Include="renderer.h" />
+    <ClInclude Include="shaders.hpp" />
     <ClInclude Include="shader_program.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ambient_pass.frag" />
     <None Include="default.frag" />
-    <None Include="default.glsl" />
-    <None Include="default_instanced.glsl" />
     <None Include="default.vert" />
     <None Include="default_instanced.vert" />
-    <None Include="simple.glsl" />
+    <None Include="lighting_pass.frag" />
+    <None Include="quad.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="gbuffer_pass.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

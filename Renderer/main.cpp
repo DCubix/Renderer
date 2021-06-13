@@ -32,8 +32,8 @@ public:
 
 		cube.load("monkey.obj");
 
-		for (int y = -5; y < 5; y++) {
-			for (int x = -5; x < 5; x++) {
+		for (int y = -3; y < 3; y++) {
+			for (int x = -3; x < 3; x++) {
 				float4x4 pos = linalg::translation_matrix(float3{ x * 3.0f, 0.0f, y * 3.0f });
 				Instance ins{};
 				ins.model = pos;
@@ -88,6 +88,7 @@ public:
 		mat.textures[Material::SlotDiffuse] = tex;
 		mat.textures[Material::SlotSpecular] = stex;
 		mat.textures[Material::SlotNormals] = ntex;
+		mat.shininess = 1.0f;
 
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
@@ -100,7 +101,7 @@ public:
 		float s1 = ::sinf(angle + PI);
 		float c1 = ::cosf(angle + PI);
 
-		float4x4 v = linalg::lookat_matrix(float3{ 18.0f, 4.0f, 18.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
+		float4x4 v = linalg::lookat_matrix(float3{ 12.0f, 6.0f, 12.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
 		float4x4 p = linalg::perspective_matrix(rad(50.0f), float(width()) / height(), 0.01f, 500.0f);
 		
 		ren.setCamera(v, p);
@@ -110,9 +111,10 @@ public:
 			i.model = linalg::mul(i.model, linalg::rotation_matrix(rot));
 		}
 
-		ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
-		ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
-		//ren.putDirectionalLight(float3{ 1.0f, -1.0f, -1.0f }, float3{ 1.0f, 0.9f, 0.0f });
+		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
+		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
+		//ren.putPointLight(float3{ c * 10.0f, 0.0f, s * 10.0f }, 18.0f, float3{ 1.0f }, 0.6f);
+		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f, 0.5f, 0.1f });
 
 		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
 

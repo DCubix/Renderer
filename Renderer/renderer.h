@@ -7,6 +7,7 @@
 #include "shader_program.h"
 #include "buffer.h"
 #include "texture.h"
+#include "framebuffer.h"
 
 #include "linalg.h"
 
@@ -33,14 +34,13 @@ enum class LightType : int {
 };
 
 struct LightParameters {
-	float3 position; float pad1;
+	float3 position;
 	float4 colorIntensity{ 0.0f };
 
-	LightType type{ LightType::Disabled }; float3 pad2;
+	LightType type{ LightType::Disabled };
 	float3 direction;
 
 	float radius, cutOff;
-	float3 pad4;
 };
 
 struct Material {
@@ -104,8 +104,21 @@ private:
 
 	ShaderProgram m_default, m_defaultInstanced;
 
+	// G-Buffer
+	ShaderProgram m_gbufferShader, m_gbufferInstancedShader;
+	Framebuffer m_gbuffer;
+
+	Mesh m_quad;
+	ShaderProgram m_ambientShader;
+	float3 m_ambientColor{ 0.1f };
+
+	ShaderProgram m_lightShader;
+
 	float4x4 m_view, m_projection;
 
-	void defaultPass(RenderPassParameters params);
+	void gbufferPass(RenderPassParameters params);
+	void ambientPass(RenderPassParameters params);
+	void drawOneLight(RenderPassParameters params, LightParameters light);
+
 };
 

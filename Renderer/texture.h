@@ -108,6 +108,8 @@ public:
 	void bind(uint32_t slot = 0) { glActiveTexture(GL_TEXTURE0 + slot); glBindTexture((GLenum)m_target, m_object); }
 	void unbind() { glBindTexture((GLenum)m_target, 0); }
 
+	GLuint object() const { return m_object; }
+
 private:
 	GLuint m_object{ 0 };
 
