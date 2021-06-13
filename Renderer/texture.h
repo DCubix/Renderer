@@ -8,6 +8,7 @@
 enum class TextureTarget {
 	Texture1D = GL_TEXTURE_1D,
 	Texture2D = GL_TEXTURE_2D,
+	Texture2DMS = GL_TEXTURE_2D_MULTISAMPLE,
 	Texture3D = GL_TEXTURE_3D,
 	CubeMap = GL_TEXTURE_CUBE_MAP
 };

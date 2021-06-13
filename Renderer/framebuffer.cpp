@@ -29,13 +29,13 @@ void Framebuffer::create(uint32_t width, uint32_t height) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Framebuffer::bind(FrameBufferTarget target, Attachment readBuffer) {
+void Framebuffer::bind(FrameBufferTarget target, Attachment readBuffer, uint32_t slot) {
 	m_boundTarget = target;
 	glGetIntegerv(GL_VIEWPORT, m_previousViewport);
 	glBindFramebuffer((GLenum)target, m_object);
 	glViewport(0, 0, m_width, m_height);
 	if (target == FrameBufferTarget::ReadFramebuffer)
-		glReadBuffer((GLenum)readBuffer);
+		glReadBuffer((GLenum)readBuffer + slot);
 }
 
 void Framebuffer::unbind(bool resetViewport) {
@@ -56,10 +56,12 @@ void Framebuffer::addColorAttachment(TextureFormat format, TextureTarget target)
 	Texture tex{};
 	tex.create(target);
 	tex.bind();
-	tex.setFilter(TextureFilter::LinearMipLinear, TextureFilter::Linear);
-	tex.setWrap(TextureWrap::Repeat, TextureWrap::Repeat);
+	if (target != TextureTarget::Texture2DMS) {
+		tex.setFilter(TextureFilter::LinearMipLinear, TextureFilter::Linear);
+		tex.setWrap(TextureWrap::Repeat, TextureWrap::Repeat);
+	}
 	tex.update(format, nullptr, m_width, m_height);
-	tex.generateMipmaps();
+	if (target != TextureTarget::Texture2DMS) tex.generateMipmaps();
 
 	std::vector<GLenum> db;
 	uint32_t att = m_colorAttachments.size();
@@ -144,7 +146,7 @@ void Framebuffer::addStencilAttachment() {
 	m_stencilAttachment = tex;
 }
 
-void Framebuffer::addRenderBuffer(TextureFormat storage, Attachment attachment) {
+void Framebuffer::addRenderBuffer(TextureFormat storage, Attachment attachment, bool multisample) {
 	if (m_renderBuffer != 0) {
 		return;
 	}
@@ -154,7 +156,10 @@ void Framebuffer::addRenderBuffer(TextureFormat storage, Attachment attachment) 
 	glGenRenderbuffers(1, &m_renderBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_object);
 	glBindRenderbuffer(GL_RENDERBUFFER, m_renderBuffer);
-	glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, m_width, m_height);
+
+	if (!multisample) glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, m_width, m_height);
+	else glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, internalFormat, m_width, m_height);
+
 	glFramebufferRenderbuffer(
 		GL_FRAMEBUFFER,
 		(GLenum)attachment,

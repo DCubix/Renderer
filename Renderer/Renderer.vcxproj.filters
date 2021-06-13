@@ -43,6 +43,9 @@
     <ClCompile Include="framebuffer.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="filter.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glad.h">
@@ -90,6 +93,9 @@
     <ClInclude Include="shaders.hpp">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="filter.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="default.vert">
@@ -110,9 +116,12 @@
     <None Include="lighting_pass.frag">
       <Filter>shaders</Filter>
     </None>
+    <None Include="gbuffer_pass.frag">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="gbuffer_pass.frag">
+    <Text Include="gamma_correct.frag">
       <Filter>shaders</Filter>
     </Text>
   </ItemGroup>

@@ -142,6 +142,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="buffer.cpp" />
+    <ClCompile Include="filter.cpp" />
     <ClCompile Include="framebuffer.cpp" />
     <ClCompile Include="game_window.cpp" />
     <ClCompile Include="glad.c" />
@@ -156,6 +157,7 @@
     <ClInclude Include="aixlog.hpp" />
     <ClInclude Include="buffer.h" />
     <ClInclude Include="data_type.h" />
+    <ClInclude Include="filter.h" />
     <ClInclude Include="framebuffer.h" />
     <ClInclude Include="game_window.h" />
     <ClInclude Include="glad.h" />
@@ -174,11 +176,14 @@
     <None Include="default.frag" />
     <None Include="default.vert" />
     <None Include="default_instanced.vert" />
+    <None Include="gbuffer_pass.frag" />
     <None Include="lighting_pass.frag" />
     <None Include="quad.vert" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="gbuffer_pass.frag" />
+    <Text Include="gamma_correct.frag">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

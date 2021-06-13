@@ -21,6 +21,8 @@ void Texture::update(TextureFormat format, const void* pixels, uint32_t width, u
 	switch (m_target) {
 		case TextureTarget::Texture1D: glTexImage1D((GLenum)m_target, 0, internalFormat, width, 0, fmt, type, pixels); break;
 		case TextureTarget::Texture2D: glTexImage2D((GLenum)m_target, 0, internalFormat, width, height, 0, fmt, type, pixels); break;
+			// TODO: custom sample count
+		case TextureTarget::Texture2DMS: glTexImage2DMultisample((GLenum)m_target, 4, internalFormat, width, height, GL_TRUE); break;
 		case TextureTarget::Texture3D: glTexImage3D((GLenum)m_target, 0, internalFormat, width, height, depth, 0, fmt, type, pixels); break;
 		default: break;
 	}

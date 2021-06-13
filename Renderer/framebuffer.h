@@ -25,19 +25,19 @@ public:
 
 	void create(uint32_t width, uint32_t height);
 
-	void bind(FrameBufferTarget target = FrameBufferTarget::Framebuffer, Attachment readBuffer = Attachment::NoAttachment);
+	void bind(FrameBufferTarget target = FrameBufferTarget::Framebuffer, Attachment readBuffer = Attachment::NoAttachment, uint32_t slot = 0);
 	void unbind(bool resetViewport = true);
 
 	void addColorAttachment(TextureFormat format, TextureTarget target);
 	void addDepthAttachment();
 	void addStencilAttachment();
-	void addRenderBuffer(TextureFormat storage, Attachment attachment);
+	void addRenderBuffer(TextureFormat storage, Attachment attachment, bool multisample = false);
 
 	void setDrawBuffer(uint32_t index) { glDrawBuffer(GL_COLOR_ATTACHMENT0 + index); }
 	void resetDrawBuffers();
 
-	const Texture& depthAttachment() { return m_depthAttachment; }
-	const Texture& stencilAttachment() { return m_stencilAttachment; }
+	Texture depthAttachment() { return m_depthAttachment; }
+	Texture stencilAttachment() { return m_stencilAttachment; }
 	std::vector<Texture> colorAttachments() { return m_colorAttachments; }
 
 	uint32_t width() const { return m_width; }

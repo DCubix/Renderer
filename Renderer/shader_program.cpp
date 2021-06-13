@@ -99,13 +99,13 @@ void ShaderProgram::destroy() {
 	if (valid()) { glDeleteProgram(m_program); m_program = 0; }
 }
 
-std::optional<ShaderProgram::Uniform> ShaderProgram::operator[](const std::string& name) {
+ShaderProgram::Uniform ShaderProgram::operator[](const std::string& name) {
 	auto pos = m_uniforms.find(name);
 	if (pos == m_uniforms.end()) {
 		GLint loc = glGetUniformLocation(m_program, name.c_str());
 		if (loc != -1) {
 			m_uniforms[name] = ShaderProgram::Uniform(loc);
-		} else return {};
+		} else return ShaderProgram::Uniform(-1);
 	}
 	return m_uniforms[name];
 }

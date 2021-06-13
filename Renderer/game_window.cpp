@@ -106,6 +106,8 @@ bool GameWindow::preCreate() {
 		WGL_COLOR_BITS_ARB,         32,
 		WGL_DEPTH_BITS_ARB,         m_config.depthBits,
 		WGL_STENCIL_BITS_ARB,       m_config.stencilBits,
+		WGL_SAMPLE_BUFFERS_ARB,     1,
+		WGL_SAMPLES_ARB,            4,
 		0
 	};
 

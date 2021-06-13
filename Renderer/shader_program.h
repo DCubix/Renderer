@@ -54,7 +54,7 @@ public:
 
 	void bind() { glUseProgram(m_program); }
 
-	std::optional<Uniform> operator[](const std::string& name);
+	Uniform operator[](const std::string& name);
 	std::optional<GLuint> attribute(const std::string& name);
 
 	template <typename T>

@@ -8,6 +8,7 @@
 #include "buffer.h"
 #include "texture.h"
 #include "framebuffer.h"
+#include "filter.h"
 
 #include "linalg.h"
 
@@ -97,6 +98,8 @@ public:
 	// TODO: Replace with a proper camera class
 	void setCamera(float4x4 view, float4x4 projection);
 
+	std::vector<Filter>& filters() { return m_filters; }
+
 private:
 	std::vector<RenderCommand> m_commands;
 	std::vector<LightParameters> m_lights;
@@ -110,15 +113,18 @@ private:
 
 	Mesh m_quad;
 	ShaderProgram m_ambientShader;
-	float3 m_ambientColor{ 0.1f };
+	float3 m_ambientColor{ 0.04f };
 
 	ShaderProgram m_lightShader;
+
+	Framebuffer m_pingPongBuffer;
+	std::vector<Filter> m_filters;
 
 	float4x4 m_view, m_projection;
 
 	void gbufferPass(RenderPassParameters params);
 	void ambientPass(RenderPassParameters params);
 	void drawOneLight(RenderPassParameters params, LightParameters light);
-
+	uint32_t postProcess(RenderPassParameters params);
 };
 

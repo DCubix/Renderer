@@ -49,12 +49,16 @@ void Renderer::create() {
 	m_lightShader.addShader(QuadVert, ShaderType::VertexShader);
 	m_lightShader.addShader(LightPassFrag, ShaderType::FragmentShader);
 	m_lightShader.link();
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
 }
 
 void Renderer::destroy() {
 	m_instanceBuffer.destroy();
 	if (m_gbufferShader.valid()) m_gbufferShader.destroy();
 	if (m_gbufferInstancedShader.valid()) m_gbufferInstancedShader.destroy();
+	if (m_pingPongBuffer.valid()) m_pingPongBuffer.destroy();
 }
 
 void Renderer::draw(Mesh mesh, float4x4 model, Material material) {
@@ -99,7 +103,13 @@ void Renderer::renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh) {
 		m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
 		m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
 		m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
-		m_gbuffer.addRenderBuffer(TextureFormat::Depthf, Attachment::DepthAttachment);
+		m_gbuffer.addRenderBuffer(TextureFormat::DepthStencil, Attachment::DepthStencilAttachment);
+	}
+
+	if (!m_pingPongBuffer.valid()) {
+		m_pingPongBuffer.create(vw, vh);
+		m_pingPongBuffer.addColorAttachment(TextureFormat::RGBA, TextureTarget::Texture2D);
+		m_pingPongBuffer.addColorAttachment(TextureFormat::RGBA, TextureTarget::Texture2D);
 	}
 
 	RenderPassParameters params{};
@@ -113,6 +123,8 @@ void Renderer::renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh) {
 	glEnable(GL_DEPTH_TEST);
 	gbufferPass(params);
 
+	m_pingPongBuffer.bind();
+	m_pingPongBuffer.setDrawBuffer(0);
 	glDisable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glViewport(params.viewport[0], params.viewport[1], params.viewport[2], params.viewport[3]);
@@ -127,6 +139,15 @@ void Renderer::renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 
+	auto slot = postProcess(params);
+
+	m_pingPongBuffer.unbind(true);
+
+	m_pingPongBuffer.bind(FrameBufferTarget::ReadFramebuffer, Attachment::ColorAttachment, slot);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBlitFramebuffer(0, 0, vw, vh, 0, 0, vw, vh, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	m_commands.clear();
 	m_lights.clear();
 }
@@ -139,8 +160,8 @@ void Renderer::setCamera(float4x4 view, float4x4 projection) {
 void setShaderParams(Material& mat, ShaderProgram& sp, RenderPassParameters params) {
 	float4x4 tv = linalg::transpose(params.view);
 
-	sp["uView"].value()(params.view);
-	sp["uProjection"].value()(params.projection);
+	sp["uView"](params.view);
+	sp["uProjection"](params.projection);
 
 	MaterialParameters mp{};
 	mp.shininess = mat.shininess;
@@ -163,15 +184,8 @@ void setShaderParams(Material& mat, ShaderProgram& sp, RenderPassParameters para
 	for (uint32_t i = 0; i < Material::SlotCount; i++) {
 		std::string un = std::string("tTextureValid[") + std::to_string(i) + std::string("]");
 
-		auto tvloc = sp[un];
-		if (tvloc) {
-			tvloc.value()(textureValid[i] ? 1 : 0);
-		}
-
-		auto tloc = sp[SlotNames[i]];
-		if (tloc) {
-			tloc.value()(slot++);
-		}
+		sp[un](textureValid[i] ? 1 : 0);
+		sp[SlotNames[i]](slot++);
 	}
 }
 
@@ -186,7 +200,7 @@ void Renderer::gbufferPass(RenderPassParameters params) {
 			case RenderCommand::Type::Single:
 			{
 				m_gbufferShader.bind();
-				m_gbufferShader["uModel"].value()(cmd.single.model);
+				m_gbufferShader["uModel"](cmd.single.model);
 
 				setShaderParams(cmd.material, m_gbufferShader, params);
 
@@ -221,8 +235,8 @@ void Renderer::ambientPass(RenderPassParameters params) {
 	m_ambientShader.bind();
 
 	m_gbuffer.colorAttachments()[0].bind(0);
-	m_ambientShader["rtDiffuse"].value()(0);
-	m_ambientShader["uAmbientColor"].value()(m_ambientColor);
+	m_ambientShader["rtDiffuse"](0);
+	m_ambientShader["uAmbientColor"](m_ambientColor);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
@@ -238,21 +252,52 @@ void Renderer::drawOneLight(RenderPassParameters params, LightParameters light) 
 	m_gbuffer.colorAttachments()[1].bind(1);
 	m_gbuffer.colorAttachments()[2].bind(2);
 	m_gbuffer.colorAttachments()[3].bind(3);
-	m_lightShader["rtDiffuse"].value()(0);
-	m_lightShader["rtMaterial"].value()(1);
-	m_lightShader["rtNormals"].value()(2);
-	m_lightShader["rtPosition"].value()(3);
+	m_lightShader["rtDiffuse"](0);
+	m_lightShader["rtMaterial"](1);
+	m_lightShader["rtNormals"](2);
+	m_lightShader["rtPosition"](3);
 
-	m_lightShader["uView"].value()(params.view);
+	m_lightShader["uView"](params.view);
 
-	m_lightShader["uLight.position"].value()(light.position);
-	m_lightShader["uLight.colorIntensity"].value()(light.colorIntensity);
-	m_lightShader["uLight.type"].value()((int)light.type);
-	m_lightShader["uLight.direction"].value()(light.direction);
-	m_lightShader["uLight.radius"].value()(light.radius);
-	m_lightShader["uLight.cutOff"].value()(light.cutOff);
+	m_lightShader["uLight.position"](light.position);
+	m_lightShader["uLight.colorIntensity"](light.colorIntensity);
+	m_lightShader["uLight.type"]((int)light.type);
+	m_lightShader["uLight.direction"](light.direction);
+	m_lightShader["uLight.radius"](light.radius);
+	m_lightShader["uLight.cutOff"](light.cutOff);
 
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+}
+
+uint32_t Renderer::postProcess(RenderPassParameters params) {
+	uint32_t slot = 1;
+#define prevSlot (1 - slot)
+
+	auto render = [&](Filter& filter) {
+		m_pingPongBuffer.setDrawBuffer(slot);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		m_quad.vao().bind();
+
+		m_gbuffer.colorAttachments()[0].bind(0);
+		m_gbuffer.colorAttachments()[1].bind(1);
+		m_gbuffer.colorAttachments()[2].bind(2);
+		m_gbuffer.colorAttachments()[3].bind(3);
+		m_pingPongBuffer.colorAttachments()[prevSlot].bind(4);
+
+		filter.bind();
+		filter.setUniforms();
+		
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+		slot = prevSlot;
+	};
+
+	for (auto& filter : m_filters) {
+		render(filter);
+	}
+
+	return prevSlot;
 }
 
 void Renderer::putPointLight(float3 position, float radius, float3 color, float intensity) {

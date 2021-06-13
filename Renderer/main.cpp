@@ -90,8 +90,14 @@ public:
 		mat.textures[Material::SlotNormals] = ntex;
 		mat.shininess = 1.0f;
 
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+		
+
+		Filter gammaCorrect;
+		const std::string gammaCorrectSrc =
+			#include "gamma_correct.frag"
+		;
+		gammaCorrect.create(gammaCorrectSrc);
+		ren.filters().push_back(gammaCorrect);
 	}
 
 	void onDraw(float elapsedTime) {
@@ -114,7 +120,7 @@ public:
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
 		//ren.putPointLight(float3{ c * 10.0f, 0.0f, s * 10.0f }, 18.0f, float3{ 1.0f }, 0.6f);
-		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f, 0.5f, 0.1f });
+		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f });
 
 		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
 
