@@ -59,10 +59,10 @@ static std::tuple<GLint, GLenum, GLenum> getTextureFormat(TextureFormat format) 
 		case TextureFormat::RG: ifmt = GL_RG8; fmt = GL_RG; type = GL_UNSIGNED_BYTE; break;
 		case TextureFormat::RGB: ifmt = GL_RGB8; fmt = GL_RGB; type = GL_UNSIGNED_BYTE; break;
 		case TextureFormat::RGBA: ifmt = GL_RGBA8; fmt = GL_RGBA; type = GL_UNSIGNED_BYTE; break;
-		case TextureFormat::Rf: ifmt = GL_R32F; fmt = GL_RED; type = GL_FLOAT; break;
-		case TextureFormat::RGf: ifmt = GL_RG32F; fmt = GL_RG; type = GL_FLOAT; break;
-		case TextureFormat::RGBf: ifmt = GL_RGB32F; fmt = GL_RGB; type = GL_FLOAT; break;
-		case TextureFormat::RGBAf: ifmt = GL_RGBA32F; fmt = GL_RGBA; type = GL_FLOAT; break;
+		case TextureFormat::Rf: ifmt = GL_R16F; fmt = GL_RED; type = GL_FLOAT; break;
+		case TextureFormat::RGf: ifmt = GL_RG16F; fmt = GL_RG; type = GL_FLOAT; break;
+		case TextureFormat::RGBf: ifmt = GL_RGB16F; fmt = GL_RGB; type = GL_FLOAT; break;
+		case TextureFormat::RGBAf: ifmt = GL_RGBA16F; fmt = GL_RGBA; type = GL_FLOAT; break;
 		case TextureFormat::Depthf: ifmt = GL_DEPTH_COMPONENT24; fmt = GL_DEPTH_COMPONENT; type = GL_FLOAT; break;
 		case TextureFormat::DepthStencil: ifmt = GL_DEPTH24_STENCIL8; fmt = GL_DEPTH_STENCIL; type = GL_FLOAT; break;
 	}
@@ -106,7 +106,7 @@ public:
 	uint32_t width() const { return m_width; }
 	uint32_t height() const { return m_height; }
 
-	void bind(uint32_t slot = 0) { glActiveTexture(GL_TEXTURE0 + slot); glBindTexture((GLenum)m_target, m_object); }
+	void bind(uint32_t slot = 0) const { glActiveTexture(GL_TEXTURE0 + slot); glBindTexture((GLenum)m_target, m_object); }
 	void unbind() { glBindTexture((GLenum)m_target, 0); }
 
 	GLuint object() const { return m_object; }

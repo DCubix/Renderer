@@ -1,20 +1,11 @@
 R""(
 
-/*
-rtRendered = Last rendered frame
-rtNormals = Normals buffer
-rtPosition = Position buffer
-rtMaterial = Material buffer
-rtDiffuse = Diffuse buffer
-
-uTexCoord = Screen-space UVs
-
-
-*/
+uniform float uGamma = 2.2;
+uniform sampler2D rtRendered;
 
 vec4 filterMain() {
 	vec4 col = texture(rtRendered, uTexCoord);
-	return vec4(pow(col.rgb, vec3(1.0 / 2.2)), 1.0);
+	return vec4(pow(col.rgb, vec3(1.0 / uGamma)), 1.0);
 }
 
 )""

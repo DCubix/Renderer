@@ -46,6 +46,10 @@
     <ClCompile Include="filter.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="render_pass.cpp">
+      <Filter>graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="filter_chain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glad.h">
@@ -96,6 +100,10 @@
     <ClInclude Include="filter.h">
       <Filter>graphics</Filter>
     </ClInclude>
+    <ClInclude Include="render_pass.h">
+      <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="filter_chain.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="default.vert">
@@ -117,6 +125,18 @@
       <Filter>shaders</Filter>
     </None>
     <None Include="gbuffer_pass.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="threshold.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="blur.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="combine.frag">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="erode.frag">
       <Filter>shaders</Filter>
     </None>
   </ItemGroup>

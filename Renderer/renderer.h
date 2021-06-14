@@ -12,6 +12,8 @@
 
 #include "linalg.h"
 
+#include "render_pass.h"
+
 struct Instance {
 	float4x4 model{ linalg::identity };
 	float4 texCoordTransform{ 0.0f, 0.0f, 1.0f, 1.0f };
@@ -57,11 +59,6 @@ struct Material {
 	float4 diffuse{ 1.0f, 1.0f, 1.0f, 1.0f };
 };
 
-struct RenderPassParameters {
-	uint32_t viewport[4];
-	float4x4 view, projection;
-};
-
 struct RenderCommand {
 	enum class Type {
 		Single = 0,
@@ -98,33 +95,26 @@ public:
 	// TODO: Replace with a proper camera class
 	void setCamera(float4x4 view, float4x4 projection);
 
-	std::vector<Filter>& filters() { return m_filters; }
+	void addPass(RenderPass* pass) { return m_passes.push_back(std::unique_ptr<RenderPass>(pass)); }
+	
+	void renderGeometry(PassParameters params);
+	void renderScreenQuad();
+
+	std::vector<LightParameters> lights() const { return m_lights; }
 
 private:
 	std::vector<RenderCommand> m_commands;
 	std::vector<LightParameters> m_lights;
 	Buffer m_instanceBuffer;
 
-	ShaderProgram m_default, m_defaultInstanced;
-
 	// G-Buffer
 	ShaderProgram m_gbufferShader, m_gbufferInstancedShader;
-	Framebuffer m_gbuffer;
 
 	Mesh m_quad;
-	ShaderProgram m_ambientShader;
-	float3 m_ambientColor{ 0.04f };
 
-	ShaderProgram m_lightShader;
-
-	Framebuffer m_pingPongBuffer;
-	std::vector<Filter> m_filters;
+	std::vector<std::unique_ptr<RenderPass>> m_passes;
 
 	float4x4 m_view, m_projection;
 
-	void gbufferPass(RenderPassParameters params);
-	void ambientPass(RenderPassParameters params);
-	void drawOneLight(RenderPassParameters params, LightParameters light);
-	uint32_t postProcess(RenderPassParameters params);
 };
 

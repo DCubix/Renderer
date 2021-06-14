@@ -61,7 +61,7 @@ void main() {
 	}
 
 	vec3 H = normalize(E + L);
-	float lambertTerm = clamp(dot(N, L), 0.0, 1.0);
+	float lambertTerm = max(dot(N, L), 0.0);
 	float phongTerm = pow(max(0.0, dot(N, H)), M.x * 128.0) * M.z;
 		
 	float ndv = 1.0 - max(dot(N, E), 0.0);

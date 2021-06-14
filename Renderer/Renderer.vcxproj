@@ -143,12 +143,14 @@
   <ItemGroup>
     <ClCompile Include="buffer.cpp" />
     <ClCompile Include="filter.cpp" />
+    <ClCompile Include="filter_chain.cpp" />
     <ClCompile Include="framebuffer.cpp" />
     <ClCompile Include="game_window.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="render_pass.cpp" />
     <ClCompile Include="shader_program.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="texture.cpp" />
@@ -158,6 +160,7 @@
     <ClInclude Include="buffer.h" />
     <ClInclude Include="data_type.h" />
     <ClInclude Include="filter.h" />
+    <ClInclude Include="filter_chain.h" />
     <ClInclude Include="framebuffer.h" />
     <ClInclude Include="game_window.h" />
     <ClInclude Include="glad.h" />
@@ -166,6 +169,7 @@
     <ClInclude Include="mesh.h" />
     <ClInclude Include="parser_tools.hpp" />
     <ClInclude Include="renderer.h" />
+    <ClInclude Include="render_pass.h" />
     <ClInclude Include="shaders.hpp" />
     <ClInclude Include="shader_program.h" />
     <ClInclude Include="stb_image.h" />
@@ -173,12 +177,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ambient_pass.frag" />
+    <None Include="blur.frag" />
+    <None Include="combine.frag" />
     <None Include="default.frag" />
     <None Include="default.vert" />
     <None Include="default_instanced.vert" />
+    <None Include="erode.frag" />
     <None Include="gbuffer_pass.frag" />
     <None Include="lighting_pass.frag" />
     <None Include="quad.vert" />
+    <None Include="threshold.frag" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="gamma_correct.frag">
