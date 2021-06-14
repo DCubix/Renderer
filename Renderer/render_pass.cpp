@@ -149,7 +149,7 @@ void BloomPass::render(PassParameters params, RenderPass* previousPass) {
 		m_thresholdedResult.addColorAttachment(TextureFormat::RGBAf, TextureTarget::Texture2D);
 	}
 
-	const uint32_t downScale = 4;
+	const uint32_t downScale = 3;
 	m_blurChain.create(params.viewport[2] / downScale, params.viewport[3] / downScale);
 
 	glDisable(GL_BLEND);

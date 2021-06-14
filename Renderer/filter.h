@@ -65,7 +65,7 @@ public:
 		shader["uThreshold"](threshold);
 	}
 
-	float threshold{ 1.0f };
+	float threshold{ 0.7f };
 
 };
 
