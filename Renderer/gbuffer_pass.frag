@@ -26,6 +26,7 @@ in DATA {
 	vec4 color;
 	vec3 eye;
 	mat3 tbn;
+	float emission;
 } VS;
 
 void main() {
@@ -42,7 +43,7 @@ void main() {
 		spec = texture(tSpecular, VS.uv).r;
 	}
 
-	float emis = material.emission;
+	float emis = material.emission * VS.emission;
 	if (tTextureValid[3]) {
 		emis *= texture(tEmission, VS.uv).r;
 	}

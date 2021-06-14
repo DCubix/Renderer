@@ -17,6 +17,7 @@ out DATA {
 	vec4 color;
 	vec3 eye;
 	mat3 tbn;
+	float emission;
 } VS;
 
 void main() {
@@ -28,6 +29,7 @@ void main() {
 	VS.position = pos.xyz;
 	VS.uv = vTexCoord;
 	VS.color = vec4(1.0);
+	VS.emission = 0.0f;
 	VS.normal = nmat * vNormal;
 	VS.eye = -uView[3].xyz * mat3(uView);
 

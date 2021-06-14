@@ -29,8 +29,7 @@ void main() {
 
 	Light l = uLight;
 	if (l.type == 0 || l.colorIntensity.w <= 0.0) {
-		fragColor = vec4(vec3(0.0), 1.0);
-		return;
+		discard;
 	}
 
 	vec3 L = vec3(0.0);
@@ -42,7 +41,7 @@ void main() {
 
 		float len = length(l.position - P);
 		if (len < l.radius)	att = smoothstep(l.radius, 0, len);
-		else att = 0.0;
+		else discard;
 	} else if (l.type == 3) {
 		L = normalize(l.position - P);
 
@@ -54,10 +53,8 @@ void main() {
 			float c = cos(l.cutOff);
 			if (S > c) {
 				att *= (1.0 - (1.0 - S) * 1.0 / (1.0 - c));
-			} else {
-				att = 0.0;
-			}
-		} else att = 0.0;
+			} else discard;
+		} else discard;
 	}
 
 	vec3 H = normalize(E + L);
@@ -69,11 +66,10 @@ void main() {
 	phongTerm += rim * M.z;
 	phongTerm *= lambertTerm;
 
-	float fac = 1.0 - M.y;
+	float fac = clamp(1.0 - M.y, 0.0, 1.0);
 	vec3 specular = phongTerm * l.colorIntensity.xyz * l.colorIntensity.w * att * fac;
 	vec3 diffuse = lambertTerm * l.colorIntensity.xyz * l.colorIntensity.w * att * fac;
 
 	fragColor = vec4((col.rgb * diffuse) + specular, col.a);
-	fragColor.rgb += col.rgb * M.y;
 }
 )""

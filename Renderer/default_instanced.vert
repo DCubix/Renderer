@@ -9,6 +9,7 @@ layout (location = 3) in vec2 vTexCoord;
 layout (location = 4) in mat4 iModel;
 layout (location = 8) in vec4 iTexCoordTransform;
 layout (location = 9) in vec4 iColor;
+layout (location = 10) in float iEmission;
 
 uniform mat4 uView;
 uniform mat4 uProjection;
@@ -21,6 +22,7 @@ out DATA {
 	vec4 color;
 	vec3 eye;
 	mat3 tbn;
+	float emission;
 } VS;
 
 void main() {
@@ -33,6 +35,7 @@ void main() {
 	VS.position = pos.xyz;
 	VS.uv = uvt;
 	VS.color = iColor;
+	VS.emission = iEmission;
 	VS.normal = nmat * vNormal;
 	VS.eye = -uView[3].xyz * mat3(uView);
 

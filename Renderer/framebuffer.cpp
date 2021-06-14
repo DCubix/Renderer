@@ -58,7 +58,7 @@ void Framebuffer::addColorAttachment(TextureFormat format, TextureTarget target)
 	tex.bind();
 	if (target != TextureTarget::Texture2DMS) {
 		tex.setFilter(TextureFilter::LinearMipLinear, TextureFilter::Linear);
-		tex.setWrap(TextureWrap::Repeat, TextureWrap::Repeat);
+		tex.setWrap(TextureWrap::ClampToEdge, TextureWrap::ClampToEdge);
 	}
 	tex.update(format, nullptr, m_width, m_height);
 	if (target != TextureTarget::Texture2DMS) tex.generateMipmaps();

@@ -72,7 +72,9 @@ void LightingPass::lighting(PassParameters params) {
 	m_ambientShader.bind();
 
 	m_gbuffer.colorAttachments()[0].bind(0);
+	m_gbuffer.colorAttachments()[1].bind(1);
 	m_ambientShader["rtDiffuse"](0);
+	m_ambientShader["rtMaterial"](1);
 	m_ambientShader["uAmbientColor"](m_ambientColor);
 
 	m_renderer->renderScreenQuad();
@@ -136,7 +138,7 @@ BloomPass::BloomPass(Renderer* renderer) : m_renderer(renderer) {
 
 	Blur* blur = new Blur();
 	blur->create();
-	blur->repeatCount(8);
+	blur->repeatCount(10);
 	m_blurChain.addFilter(blur);
 }
 

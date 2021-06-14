@@ -8,7 +8,8 @@ static BufferLayoutEntry InstanceLayout[] = {
 	{ 4, DataType::Float, false },
 	{ 4, DataType::Float, false },
 	{ 4, DataType::Float, false },
-	{ 4, DataType::Float, true } // Color
+	{ 4, DataType::Float, true }, // Color
+	{ 1, DataType::Float, false } // Emission
 };
 
 static std::string SlotNames[] = {
@@ -67,13 +68,14 @@ void Renderer::drawInstanced(Mesh mesh, Instance* instances, size_t count, Mater
 	if (!mesh.m_hasInstanceBuffer) {
 		mesh.vao().bind();
 		m_instanceBuffer.bind();
-		m_instanceBuffer.setLayout(InstanceLayout, 6, sizeof(Instance), 4);
+		m_instanceBuffer.setLayout(InstanceLayout, 7, sizeof(Instance), 4);
 		m_instanceBuffer.attributeDivisor(4, 1);
 		m_instanceBuffer.attributeDivisor(5, 1);
 		m_instanceBuffer.attributeDivisor(6, 1);
 		m_instanceBuffer.attributeDivisor(7, 1);
 		m_instanceBuffer.attributeDivisor(8, 1);
 		m_instanceBuffer.attributeDivisor(9, 1);
+		m_instanceBuffer.attributeDivisor(10, 1);
 
 		m_instanceBuffer.update(instances, count);
 

@@ -32,14 +32,16 @@ public:
 
 		cube.load("monkey.obj");
 
-		for (int y = -3; y < 3; y++) {
-			for (int x = -3; x < 3; x++) {
+		for (int y = -2; y <= 2; y++) {
+			for (int x = -2; x <= 2; x++) {
 				float4x4 pos = linalg::translation_matrix(float3{ x * 3.0f, 0.0f, y * 3.0f });
 				Instance ins{};
 				ins.model = pos;
 				ins.texCoordTransform = float4{ 0.0f, 0.0f, 1.5f, 1.5f };
 				ins.color = float4{ randf(), randf(), randf(), 1.0f };
 				instances.push_back(ins);
+
+				instancePulses.push_back(2.0f + randf() * 4.0f);
 			}
 		}
 
@@ -89,40 +91,53 @@ public:
 		mat.textures[Material::SlotSpecular] = stex;
 		mat.textures[Material::SlotNormals] = ntex;
 		mat.shininess = 1.0f;
-
+		mat.emission = 1.0f;
 	}
 
 	void onDraw(float elapsedTime) {
-		float s = ::sinf(angle);
-		float c = ::cosf(angle);
+		float s = ::sinf(angle * 0.4f);
+		float c = ::cosf(angle * 0.4f);
 
 		float s1 = ::sinf(angle + PI);
 		float c1 = ::cosf(angle + PI);
 
-		float4x4 v = linalg::lookat_matrix(float3{ 12.0f, 6.0f, 12.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
+		float4x4 v = linalg::lookat_matrix(float3{ c*10.0f, 4.0f, s*10.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
 		float4x4 p = linalg::perspective_matrix(rad(50.0f), float(width()) / height(), 0.01f, 500.0f);
 		
 		ren.setCamera(v, p);
 		//ren.draw(cube, m);
+		int k = 0;
 		for (auto& i : instances) {
+			float x = k % 4 - 2;
+			float y = k / 4 - 2;
 			float4 rot = linalg::rotation_quat(float3{ 0.0f, 1.0f, 0.0f }, elapsedTime * 0.4f);
 			i.model = linalg::mul(i.model, linalg::rotation_matrix(rot));
+
+			float wave = ::sinf(angle * instancePulses[k]) * 0.5f + 0.5f;
+			float lpwave = wave * wave * wave * wave;
+
+			i.emission = lpwave * 4.0f;
+
+			ren.putPointLight(float3{ x * 3.0f, 0.0f, y * 3.0f }, 3.0f, i.color.xyz(), lpwave * 2.0f);
+
+			k++;
 		}
 
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
 		//ren.putPointLight(float3{ c * 10.0f, 0.0f, s * 10.0f }, 18.0f, float3{ 1.0f }, 0.6f);
-		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f }, 1.0f);
+		//ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f }, 0.43f);
 
 		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
 
 		ren.renderAll(0, 0, width(), height());
 
-		angle += elapsedTime * 1.7f;
+		angle += elapsedTime;
 	}
 
 	Renderer ren;
 	std::vector<Instance> instances;
+	std::vector<float> instancePulses;
 
 	Texture tex, ntex, stex;
 	Material mat{};

@@ -34,6 +34,8 @@
 #define WGL_FULL_ACCELERATION_ARB                 0x2027
 #define WGL_TYPE_RGBA_ARB                         0x202B
 
+#include "renderdoc_app.h"
+
 struct ContextConfig {
 	uint8_t depthBits{ 24 },
 		stencilBits{ 8 },
@@ -106,4 +108,3 @@ private:
 
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 };
-
