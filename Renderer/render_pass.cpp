@@ -4,16 +4,6 @@
 #include "shaders.hpp"
 
 LightingPass::LightingPass(Renderer* renderer) : m_renderer(renderer) {
-	m_gbufferShader.create();
-	m_gbufferShader.addShader(DefaultVert, ShaderType::VertexShader);
-	m_gbufferShader.addShader(GBufferPassFrag, ShaderType::FragmentShader);
-	m_gbufferShader.link();
-
-	m_gbufferInstancedShader.create();
-	m_gbufferInstancedShader.addShader(DefaultInstancedVert, ShaderType::VertexShader);
-	m_gbufferInstancedShader.addShader(GBufferPassFrag, ShaderType::FragmentShader);
-	m_gbufferInstancedShader.link();
-
 	m_ambientShader.create();
 	m_ambientShader.addShader(QuadVert, ShaderType::VertexShader);
 	m_ambientShader.addShader(AmbientPassFrag, ShaderType::FragmentShader);
@@ -23,6 +13,14 @@ LightingPass::LightingPass(Renderer* renderer) : m_renderer(renderer) {
 	m_lightShader.addShader(QuadVert, ShaderType::VertexShader);
 	m_lightShader.addShader(LightPassFrag, ShaderType::FragmentShader);
 	m_lightShader.link();
+
+	m_shadowShader.create();
+	m_shadowShader.addProgram(ShadowSrc);
+	m_shadowShader.link();
+
+	m_shadowInstancedShader.create();
+	m_shadowInstancedShader.addProgram(ShadowInstSrc);
+	m_shadowInstancedShader.link();
 }
 
 void LightingPass::render(PassParameters params, RenderPass* previousPass) {
@@ -94,6 +92,26 @@ void LightingPass::lighting(PassParameters params) {
 
 	glBlendFunc(GL_ONE, GL_ONE);
 	for (auto& light : m_renderer->lights()) {
+		if (light.type == LightType::Directional) { // TODO: Implement this for Spot too
+			// TODO: Make this adjustable
+			const float s = 16.0f;
+			float4x4 proj = linalg::ortho_matrix(-s, s, -s, s, -s, s + 4.0f);
+
+			float3 dir = -light.direction;
+			float4x4 view = (linalg::lookat_matrix(dir * s / 4.0f, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f }));
+
+			renderToShadowBuffer(light, view, proj);
+			m_passResult.bind();
+			m_lightShader.bind();
+
+			m_lightShader["uLight.viewProj"](linalg::mul(proj, view));
+			m_lightShader["rtShadowEnabled"](1);
+			m_lightShader["rtShadow"](4);
+			m_lightShader["uNF"](float2{ -s, s+4.0f });
+
+			m_shadowBuffer.depthAttachment().bind(4);
+		}
+
 		m_lightShader["uLight.position"](light.position);
 		m_lightShader["uLight.colorIntensity"](light.colorIntensity);
 		m_lightShader["uLight.type"]((int)light.type);
@@ -106,6 +124,37 @@ void LightingPass::lighting(PassParameters params) {
 
 	glDisable(GL_BLEND);
 	m_passResult.unbind(true);
+}
+
+void LightingPass::renderToShadowBuffer(LightParameters params, float4x4 view, float4x4 proj) {
+	if (params.type != LightType::Directional) return;
+
+	if (!m_shadowBuffer.valid()) {
+		m_shadowBuffer.create(4096, 4096);
+		m_shadowBuffer.addDepthAttachment();
+		//m_shadowBuffer.addRenderBuffer(TextureFormat::Depthf, Attachment::DepthAttachment);
+	}
+
+	glDisable(GL_BLEND);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);
+
+	m_shadowBuffer.bind();
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	PassParameters pp;
+	pp.projection = proj;
+	pp.view = view;
+
+	m_renderer->renderGeometryWithShader(pp, m_shadowShader, m_shadowInstancedShader);
+
+	m_shadowBuffer.unbind(true);
+
+	glCullFace(GL_BACK);
+	glDisable(GL_CULL_FACE);
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
 }
 
 GammaCorrectionPass::GammaCorrectionPass(Renderer* renderer) : m_renderer(renderer) {
@@ -134,7 +183,6 @@ void GammaCorrectionPass::render(PassParameters params, RenderPass* previousPass
 BloomPass::BloomPass(Renderer* renderer) : m_renderer(renderer) {
 	m_thresholdFilter.create();
 	m_combineFilter.create();
-	//m_erodeFilter.create();
 
 	Blur* blur = new Blur();
 	blur->create();
@@ -165,14 +213,6 @@ void BloomPass::render(PassParameters params, RenderPass* previousPass) {
 	m_thresholdFilter.setUniforms();
 
 	m_renderer->renderScreenQuad();
-
-	/*m_thresholdedResult.colorAttachments()[0].bind(0);
-
-	m_erodeFilter.bind();
-	m_erodeFilter.resolution = float2{ float(params.viewport[2]), float(params.viewport[3]) };
-	m_erodeFilter.setUniforms();
-
-	m_renderer->renderScreenQuad();*/
 
 	m_thresholdedResult.unbind(true);
 

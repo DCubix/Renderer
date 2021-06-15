@@ -27,3 +27,11 @@ constexpr auto AmbientPassFrag =
 constexpr auto LightPassFrag =
 #include "lighting_pass.frag"
 ;
+
+constexpr auto ShadowSrc =
+#include "shadow.glsl"
+;
+
+constexpr auto ShadowInstSrc =
+#include "shadow_instanced.glsl"
+;

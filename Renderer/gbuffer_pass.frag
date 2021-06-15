@@ -38,7 +38,7 @@ void main() {
 
 	if (diff.a <= 0.5) discard;
 
-	float spec = 0.0;
+	float spec = 1.0;
 	if (tTextureValid[1]) {
 		spec = texture(tSpecular, VS.uv).r;
 	}

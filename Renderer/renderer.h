@@ -23,7 +23,7 @@ struct Instance {
 
 // To the shader
 struct MaterialParameters {
-	float shininess, emission;
+	float shininess{ 1.0f }, emission{ 0.0f };
 	
 	float pad[2];
 
@@ -99,6 +99,7 @@ public:
 	void addPass(RenderPass* pass) { return m_passes.push_back(std::unique_ptr<RenderPass>(pass)); }
 	
 	void renderGeometry(PassParameters params);
+	void renderGeometryWithShader(PassParameters params, ShaderProgram& shader, ShaderProgram& instancedShader);
 	void renderScreenQuad();
 
 	std::vector<LightParameters> lights() const { return m_lights; }
@@ -108,9 +109,9 @@ private:
 	std::vector<LightParameters> m_lights;
 	Buffer m_instanceBuffer;
 
-	// G-Buffer
 	ShaderProgram m_gbufferShader, m_gbufferInstancedShader;
-
+	ShaderProgram m_nullShader, m_nullInstancedShader;
+	
 	Mesh m_quad;
 
 	std::vector<std::unique_ptr<RenderPass>> m_passes;

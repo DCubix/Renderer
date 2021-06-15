@@ -185,7 +185,10 @@
     <None Include="erode.frag" />
     <None Include="gbuffer_pass.frag" />
     <None Include="lighting_pass.frag" />
+    <None Include="null.frag" />
     <None Include="quad.vert" />
+    <None Include="shadow.glsl" />
+    <None Include="shadow_instanced.glsl" />
     <None Include="threshold.frag" />
   </ItemGroup>
   <ItemGroup>

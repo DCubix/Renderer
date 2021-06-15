@@ -30,6 +30,15 @@ public:
 
 		ren.create();
 
+		Vertex fverts[] = {
+			Vertex{.position = float3(-10.0f, 0.0f, -10.0f), .normal = float3{ 0.0f, 1.0f, 0.0f }, .texCoord = float2{ 0.0f, 0.0f }},
+			Vertex{.position = float3( 10.0f, 0.0f, -10.0f), .normal = float3{ 0.0f, 1.0f, 0.0f }, .texCoord = float2{ 3.0f, 0.0f }},
+			Vertex{.position = float3( 10.0f, 0.0f,  10.0f), .normal = float3{ 0.0f, 1.0f, 0.0f }, .texCoord = float2{ 3.0f, 3.0f }},
+			Vertex{.position = float3(-10.0f, 0.0f,  10.0f), .normal = float3{ 0.0f, 1.0f, 0.0f }, .texCoord = float2{ 0.0f, 3.0f }}
+		};
+		uint32_t finds[] = { 2, 1, 0, 0, 3, 2 };
+
+		floorMesh.create(fverts, 4, finds, 6);
 		cube.load("monkey.obj");
 
 		for (int y = -2; y <= 2; y++) {
@@ -48,7 +57,7 @@ public:
 		tex.create(TextureTarget::Texture2D);
 		{
 			int w, h, comp;
-			auto data = stbi_load("bricks.jpg", &w, &h, &comp, 4);
+			auto data = stbi_load("marble.jpg", &w, &h, &comp, 4);
 			if (data) {
 				tex.bind();
 				tex.update(TextureFormat::RGBA, data, w, h);
@@ -59,39 +68,13 @@ public:
 			}
 		}
 
-		ntex.create(TextureTarget::Texture2D);
-		{
-			int w, h, comp;
-			auto data = stbi_load("bricks_n.png", &w, &h, &comp, 4);
-			if (data) {
-				ntex.bind();
-				ntex.update(TextureFormat::RGBA, data, w, h);
-				ntex.setWrap(TextureWrap::Repeat, TextureWrap::Repeat);
-				ntex.setFilter(TextureFilter::LinearMipLinear, TextureFilter::Linear);
-				ntex.generateMipmaps();
-				stbi_image_free(data);
-			}
-		}
-
-		stex.create(TextureTarget::Texture2D);
-		{
-			int w, h, comp;
-			auto data = stbi_load("bricks_s.png", &w, &h, &comp, 4);
-			if (data) {
-				stex.bind();
-				stex.update(TextureFormat::RGBA, data, w, h);
-				stex.setWrap(TextureWrap::Repeat, TextureWrap::Repeat);
-				stex.setFilter(TextureFilter::LinearMipLinear, TextureFilter::Linear);
-				stex.generateMipmaps();
-				stbi_image_free(data);
-			}
-		}
-
 		mat.textures[Material::SlotDiffuse] = tex;
-		mat.textures[Material::SlotSpecular] = stex;
-		mat.textures[Material::SlotNormals] = ntex;
 		mat.shininess = 1.0f;
-		mat.emission = 1.0f;
+		//mat.emission = 1.0f;
+
+		floorMat.diffuse = float4{ 0.4f, 0.6f, 0.4f, 1.0f };
+		floorMat.shininess = 1.5f;
+		floorMat.textures[Material::SlotDiffuse] = tex;
 	}
 
 	void onDraw(float elapsedTime) {
@@ -101,7 +84,7 @@ public:
 		float s1 = ::sinf(angle + PI);
 		float c1 = ::cosf(angle + PI);
 
-		float4x4 v = linalg::lookat_matrix(float3{ c*10.0f, 4.0f, s*10.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
+		float4x4 v = linalg::lookat_matrix(float3{ 10.0f, 4.0f, 10.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
 		float4x4 p = linalg::perspective_matrix(rad(50.0f), float(width()) / height(), 0.01f, 500.0f);
 		
 		ren.setCamera(v, p);
@@ -116,9 +99,9 @@ public:
 			float wave = ::sinf(angle * instancePulses[k]) * 0.5f + 0.5f;
 			float lpwave = wave * wave * wave * wave;
 
-			i.emission = lpwave * 4.0f;
+			//i.emission = lpwave * 4.0f;
 
-			ren.putPointLight(float3{ x * 3.0f, 0.0f, y * 3.0f }, 3.0f, i.color.xyz(), lpwave * 2.0f);
+			//ren.putPointLight(float3{ x * 3.0f, 0.0f, y * 3.0f }, 3.0f, i.color.xyz(), lpwave * 2.0f);
 
 			k++;
 		}
@@ -126,8 +109,9 @@ public:
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
 		//ren.putPointLight(float3{ c * 10.0f, 0.0f, s * 10.0f }, 18.0f, float3{ 1.0f }, 0.6f);
-		//ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f }, 0.43f);
+		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f });
 
+		ren.draw(floorMesh, linalg::translation_matrix(float3{ 0.0f, -1.0f, 0.0f }), floorMat);
 		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
 
 		ren.renderAll(0, 0, width(), height());
@@ -140,8 +124,8 @@ public:
 	std::vector<float> instancePulses;
 
 	Texture tex, ntex, stex;
-	Material mat{};
-	Mesh cube;
+	Material mat{}, floorMat{};
+	Mesh cube, floorMesh;
 
 	float angle{ 0.0f };
 };

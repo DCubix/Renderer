@@ -41,6 +41,16 @@ void Renderer::create() {
 	m_gbufferInstancedShader.addShader(GBufferPassFrag, ShaderType::FragmentShader);
 	m_gbufferInstancedShader.link();
 
+	m_nullShader.create();
+	m_nullShader.addShader(DefaultVert, ShaderType::VertexShader);
+	m_nullShader.addShader("#version 330 core\nvoid main(){}", ShaderType::FragmentShader);
+	m_nullShader.link();
+
+	m_nullInstancedShader.create();
+	m_nullInstancedShader.addShader(DefaultInstancedVert, ShaderType::VertexShader);
+	m_nullInstancedShader.addShader("#version 330 core\nvoid main(){}", ShaderType::FragmentShader);
+	m_nullInstancedShader.link();
+
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 
@@ -165,8 +175,6 @@ void Renderer::setCamera(float4x4 view, float4x4 projection) {
 }
 
 void setShaderParams(Material& mat, ShaderProgram& sp, PassParameters params) {
-	float4x4 tv = linalg::transpose(params.view);
-
 	sp["uView"](params.view);
 	sp["uProjection"](params.projection);
 
@@ -183,16 +191,13 @@ void setShaderParams(Material& mat, ShaderProgram& sp, PassParameters params) {
 		textureValid[i] = tex.valid();
 		if (tex.valid()) {
 			tex.bind(slot++);
+			sp[SlotNames[i]](slot-1);
 		}
-		i++;
-	}
 
-	slot = 0;
-	for (uint32_t i = 0; i < Material::SlotCount; i++) {
 		std::string un = std::string("tTextureValid[") + std::to_string(i) + std::string("]");
-
 		sp[un](textureValid[i] ? 1 : 0);
-		sp[SlotNames[i]](slot++);
+
+		i++;
 	}
 }
 
@@ -227,6 +232,38 @@ void Renderer::renderGeometry(PassParameters params) {
 			{
 				m_gbufferInstancedShader.bind();
 				setShaderParams(cmd.material, m_gbufferInstancedShader, params);
+
+				cmd.mesh.vao().bind();
+				glDrawElementsInstanced(
+					GL_TRIANGLES,
+					cmd.mesh.indexCount(),
+					GL_UNSIGNED_INT,
+					nullptr,
+					cmd.instanced.count
+				);
+			} break;
+		}
+	}
+}
+
+void Renderer::renderGeometryWithShader(PassParameters params, ShaderProgram& shader, ShaderProgram& instancedShader) {
+	for (auto& cmd : m_commands) {
+		switch (cmd.type) {
+			case RenderCommand::Type::Single:
+			{
+				shader.bind();
+				shader["uModel"](cmd.single.model);
+				shader["uView"](params.view);
+				shader["uProjection"](params.projection);
+
+				cmd.mesh.vao().bind();
+				glDrawElements(GL_TRIANGLES, cmd.mesh.indexCount(), GL_UNSIGNED_INT, nullptr);
+			} break;
+			case RenderCommand::Type::Instanced:
+			{
+				instancedShader.bind();
+				instancedShader["uView"](params.view);
+				instancedShader["uProjection"](params.projection);
 
 				cmd.mesh.vao().bind();
 				glDrawElementsInstanced(

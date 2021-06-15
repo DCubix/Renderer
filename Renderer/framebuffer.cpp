@@ -105,6 +105,7 @@ void Framebuffer::addDepthAttachment() {
 
 	Texture tex{};
 	tex.create(TextureTarget::Texture2D);
+	tex.bind();
 	tex.setFilter(TextureFilter::Linear, TextureFilter::Linear);
 	tex.setWrap(TextureWrap::ClampToEdge, TextureWrap::ClampToEdge);
 	tex.update(TextureFormat::Depthf, nullptr, m_width, m_height);

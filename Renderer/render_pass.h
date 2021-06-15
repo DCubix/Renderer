@@ -9,6 +9,7 @@ using namespace linalg::aliases;
 #include "filter_chain.h"
 
 class Renderer;
+struct LightParameters;
 
 struct PassParameters {
 	uint32_t viewport[4];
@@ -33,8 +34,8 @@ public:
 private:
 	Renderer* m_renderer;
 
-	ShaderProgram m_gbufferShader, m_gbufferInstancedShader;
-	Framebuffer m_gbuffer, m_passResult;
+	ShaderProgram m_shadowShader, m_shadowInstancedShader;
+	Framebuffer m_gbuffer, m_passResult, m_shadowBuffer;
 
 	ShaderProgram m_ambientShader;
 	float3 m_ambientColor{ 0.02f };
@@ -43,6 +44,7 @@ private:
 
 	void gbufferFill(PassParameters params);
 	void lighting(PassParameters params);
+	void renderToShadowBuffer(LightParameters params, float4x4 view, float4x4 proj);
 };
 
 class GammaCorrectionPass : public RenderPass {
@@ -75,7 +77,6 @@ private:
 
 	Threshold m_thresholdFilter{};
 	Combine m_combineFilter{};
-	//Erode m_erodeFilter{};
 	FilterChain m_blurChain{};
 
 	Framebuffer m_passResult, m_thresholdedResult;
