@@ -52,6 +52,12 @@
     <ClCompile Include="filter_chain.cpp">
       <Filter>graphics</Filter>
     </ClCompile>
+    <ClCompile Include="tinyxml2.cpp">
+      <Filter>external</Filter>
+    </ClCompile>
+    <ClCompile Include="skeleton.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glad.h">
@@ -107,6 +113,12 @@
     </ClInclude>
     <ClInclude Include="filter_chain.h">
       <Filter>graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyxml2.h">
+      <Filter>external</Filter>
+    </ClInclude>
+    <ClInclude Include="skeleton.h">
+      <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

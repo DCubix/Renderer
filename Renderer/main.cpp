@@ -40,6 +40,7 @@ public:
 
 		floorMesh.create(fverts, 4, finds, 6);
 		cube.load("monkey.obj");
+		worm.import("test.dae");
 
 		for (int y = -2; y <= 2; y++) {
 			for (int x = -2; x <= 2; x++) {
@@ -84,7 +85,7 @@ public:
 		float s1 = ::sinf(angle + PI);
 		float c1 = ::cosf(angle + PI);
 
-		float4x4 v = linalg::lookat_matrix(float3{ 10.0f, 4.0f, 10.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
+		float4x4 v = linalg::lookat_matrix(float3{ c*10.0f, 4.0f, s*10.0f }, float3{ 0.0f }, float3{ 0.0f, 1.0f, 0.0f });
 		float4x4 p = linalg::perspective_matrix(rad(50.0f), float(width()) / height(), 0.01f, 500.0f);
 		
 		ren.setCamera(v, p);
@@ -99,9 +100,9 @@ public:
 			float wave = ::sinf(angle * instancePulses[k]) * 0.5f + 0.5f;
 			float lpwave = wave * wave * wave * wave;
 
-			//i.emission = lpwave * 4.0f;
+			i.emission = lpwave * 4.0f;
 
-			//ren.putPointLight(float3{ x * 3.0f, 0.0f, y * 3.0f }, 3.0f, i.color.xyz(), lpwave * 2.0f);
+			ren.putPointLight(float3{ x * 3.0f, 0.0f, y * 3.0f }, 3.0f, i.color.xyz(), lpwave * 2.0f);
 
 			k++;
 		}
@@ -109,10 +110,11 @@ public:
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s1, -1.0f, c1 }, 15.0f, rad(40.0f), float3{ 1.0f, 0.5f, 0.0f });
 		//ren.putSpotLight(float3{ 0.0f, 3.0f, 0.0f }, float3{ s, -1.0f, c }, 15.0f, rad(40.0f), float3{ 0.0f, 0.5f, 1.0f });
 		//ren.putPointLight(float3{ c * 10.0f, 0.0f, s * 10.0f }, 18.0f, float3{ 1.0f }, 0.6f);
-		ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f });
+		//ren.putDirectionalLight(float3{ -1.0f, -1.0f, 1.0f }, float3{ 1.0f });
 
-		ren.draw(floorMesh, linalg::translation_matrix(float3{ 0.0f, -1.0f, 0.0f }), floorMat);
-		ren.drawInstanced(cube, instances.data(), instances.size(), mat);
+		ren.draw(&floorMesh, linalg::translation_matrix(float3{ 0.0f, -1.0f, 0.0f }), floorMat);
+		//ren.draw(&worm, linalg::translation_matrix(float3{ 0.0f, 2.0f, 0.0f }), floorMat);
+		ren.drawInstanced(&cube, instances.data(), instances.size(), mat);
 
 		ren.renderAll(0, 0, width(), height());
 
@@ -125,7 +127,7 @@ public:
 
 	Texture tex, ntex, stex;
 	Material mat{}, floorMat{};
-	Mesh cube, floorMesh;
+	Mesh cube, floorMesh, worm;
 
 	float angle{ 0.0f };
 };

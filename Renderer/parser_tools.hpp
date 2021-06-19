@@ -26,6 +26,8 @@ public:
 		return c;
 	}
 
+	void cleanSpaces() { while (isspace(peek())) scan(); }
+
 	std::string scanWhileMatch(const std::function<bool(char)>& matcher, bool includeLast = false) {
 		std::string ret;
 		while (matcher(peek()) && hasNext()) {
@@ -43,11 +45,11 @@ public:
 	}
 
 	int scanInt() {
-		return std::stoi(scanWhileMatch([](char c) { return isdigit(c); }));
+		return std::stoi(scanWhileMatch([](char c) { return isdigit(c) || c == '-'; }));
 	}
 
 	float scanFloat() {
-		return std::stoi(scanWhileMatch([](char c) { return isdigit(c) || c == '.'; }));
+		return std::stof(scanWhileMatch([](char c) { return isdigit(c) || c == '.' || c == 'e' || c == 'E' || c == '-'; }));
 	}
 
 private:

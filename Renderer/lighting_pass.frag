@@ -197,7 +197,7 @@ void main() {
 		float bias = 0.04 * tan(acos(clamp(lambertTerm, 0.0, 1.0)));
 		bias = clamp(bias, 0.0, 0.01);
 
-		vis = PCSS(rtShadow, coord, bias, 0.001); // TODO: Light size?
+		vis = PCSS(rtShadow, coord, bias, 0.0008); // TODO: Light size?
 		//vis = 1.0 - PCF(rtShadow, coord, bias, 0.0005);
 	}
 

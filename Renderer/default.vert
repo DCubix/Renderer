@@ -5,6 +5,9 @@ layout (location = 1) in vec3 vNormal;
 layout (location = 2) in vec3 vTangent;
 layout (location = 3) in vec2 vTexCoord;
 
+//layout (location = 4) in vec2 vWeights;
+//layout (location = 5) in uvec2 vJointIDs;
+
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;

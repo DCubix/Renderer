@@ -74,7 +74,7 @@ struct RenderCommand {
 		size_t count;
 	} instanced;
 
-	Mesh mesh;
+	Mesh* mesh;
 	Material material{};
 };
 
@@ -84,8 +84,8 @@ public:
 	void create();
 	void destroy();
 
-	void draw(Mesh mesh, float4x4 model, Material material);
-	void drawInstanced(Mesh mesh, Instance* instances, size_t count, Material material);
+	void draw(Mesh* mesh, float4x4 model, Material material);
+	void drawInstanced(Mesh* mesh, Instance* instances, size_t count, Material material);
 
 	void putPointLight(float3 position, float radius, float3 color, float intensity = 1.0f);
 	void putDirectionalLight(float3 direction, float3 color, float intensity = 1.0f);

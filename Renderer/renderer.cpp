@@ -65,7 +65,7 @@ void Renderer::destroy() {
 	if (m_gbufferInstancedShader.valid()) m_gbufferInstancedShader.destroy();
 }
 
-void Renderer::draw(Mesh mesh, float4x4 model, Material material) {
+void Renderer::draw(Mesh* mesh, float4x4 model, Material material) {
 	RenderCommand cmd{};
 	cmd.type = RenderCommand::Type::Single;
 	cmd.mesh = mesh;
@@ -74,9 +74,9 @@ void Renderer::draw(Mesh mesh, float4x4 model, Material material) {
 	m_commands.push_back(cmd);
 }
 
-void Renderer::drawInstanced(Mesh mesh, Instance* instances, size_t count, Material material) {
-	if (!mesh.m_hasInstanceBuffer) {
-		mesh.vao().bind();
+void Renderer::drawInstanced(Mesh* mesh, Instance* instances, size_t count, Material material) {
+	if (!mesh->m_hasInstanceBuffer) {
+		mesh->vao().bind();
 		m_instanceBuffer.bind();
 		m_instanceBuffer.setLayout(InstanceLayout, 7, sizeof(Instance), 4);
 		m_instanceBuffer.attributeDivisor(4, 1);
@@ -89,8 +89,8 @@ void Renderer::drawInstanced(Mesh mesh, Instance* instances, size_t count, Mater
 
 		m_instanceBuffer.update(instances, count);
 
-		mesh.vao().unbind();
-		mesh.m_hasInstanceBuffer = true;
+		mesh->vao().unbind();
+		mesh->m_hasInstanceBuffer = true;
 	}
 
 	RenderCommand cmd{};
@@ -102,21 +102,6 @@ void Renderer::drawInstanced(Mesh mesh, Instance* instances, size_t count, Mater
 }
 
 void Renderer::renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh) {
-	//if (!m_gbuffer.valid()) {
-	//	m_gbuffer.create(vw, vh);
-	//	m_gbuffer.addColorAttachment(TextureFormat::RGBA, TextureTarget::Texture2D);
-	//	m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
-	//	m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
-	//	m_gbuffer.addColorAttachment(TextureFormat::RGBf, TextureTarget::Texture2D);
-	//	m_gbuffer.addRenderBuffer(TextureFormat::DepthStencil, Attachment::DepthStencilAttachment);
-	//}
-
-	//if (!m_pingPongBuffer.valid()) {
-	//	m_pingPongBuffer.create(vw, vh);
-	//	m_pingPongBuffer.addColorAttachment(TextureFormat::RGBAf, TextureTarget::Texture2D);
-	//	m_pingPongBuffer.addColorAttachment(TextureFormat::RGBAf, TextureTarget::Texture2D);
-	//}
-
 	PassParameters params{};
 	params.viewport[0] = vx;
 	params.viewport[1] = vy;
@@ -124,34 +109,6 @@ void Renderer::renderAll(uint32_t vx, uint32_t vy, uint32_t vw, uint32_t vh) {
 	params.viewport[3] = vh;
 	params.view = m_view;
 	params.projection = m_projection;
-
-	//glEnable(GL_DEPTH_TEST);
-	//gbufferPass(params);
-
-	//m_pingPongBuffer.bind();
-	//m_pingPongBuffer.setDrawBuffer(0);
-	//glDisable(GL_DEPTH_TEST);
-	//glClear(GL_COLOR_BUFFER_BIT);
-	//glViewport(params.viewport[0], params.viewport[1], params.viewport[2], params.viewport[3]);
-
-	//ambientPass(params);
-
-	//glEnable(GL_BLEND);
-	//glBlendFunc(GL_ONE, GL_ONE);
-	//for (auto& light : m_lights) {
-	//	drawOneLight(params, light);
-	//}
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glDisable(GL_BLEND);
-
-	//auto slot = postProcess(params);
-
-	//m_pingPongBuffer.unbind(true);
-
-	//m_pingPongBuffer.bind(FrameBufferTarget::ReadFramebuffer, Attachment::ColorAttachment, slot);
-	//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	//glBlitFramebuffer(0, 0, vw, vh, 0, 0, vw, vh, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	RenderPass* previous = nullptr;
 	for (auto& pass : m_passes) {
@@ -225,18 +182,18 @@ void Renderer::renderGeometry(PassParameters params) {
 
 				setShaderParams(cmd.material, m_gbufferShader, params);
 
-				cmd.mesh.vao().bind();
-				glDrawElements(GL_TRIANGLES, cmd.mesh.indexCount(), GL_UNSIGNED_INT, nullptr);
+				cmd.mesh->vao().bind();
+				glDrawElements(GL_TRIANGLES, cmd.mesh->indexCount(), GL_UNSIGNED_INT, nullptr);
 			} break;
 			case RenderCommand::Type::Instanced:
 			{
 				m_gbufferInstancedShader.bind();
 				setShaderParams(cmd.material, m_gbufferInstancedShader, params);
 
-				cmd.mesh.vao().bind();
+				cmd.mesh->vao().bind();
 				glDrawElementsInstanced(
 					GL_TRIANGLES,
-					cmd.mesh.indexCount(),
+					cmd.mesh->indexCount(),
 					GL_UNSIGNED_INT,
 					nullptr,
 					cmd.instanced.count
@@ -256,8 +213,8 @@ void Renderer::renderGeometryWithShader(PassParameters params, ShaderProgram& sh
 				shader["uView"](params.view);
 				shader["uProjection"](params.projection);
 
-				cmd.mesh.vao().bind();
-				glDrawElements(GL_TRIANGLES, cmd.mesh.indexCount(), GL_UNSIGNED_INT, nullptr);
+				cmd.mesh->vao().bind();
+				glDrawElements(GL_TRIANGLES, cmd.mesh->indexCount(), GL_UNSIGNED_INT, nullptr);
 			} break;
 			case RenderCommand::Type::Instanced:
 			{
@@ -265,10 +222,10 @@ void Renderer::renderGeometryWithShader(PassParameters params, ShaderProgram& sh
 				instancedShader["uView"](params.view);
 				instancedShader["uProjection"](params.projection);
 
-				cmd.mesh.vao().bind();
+				cmd.mesh->vao().bind();
 				glDrawElementsInstanced(
 					GL_TRIANGLES,
-					cmd.mesh.indexCount(),
+					cmd.mesh->indexCount(),
 					GL_UNSIGNED_INT,
 					nullptr,
 					cmd.instanced.count

@@ -152,8 +152,10 @@
     <ClCompile Include="renderer.cpp" />
     <ClCompile Include="render_pass.cpp" />
     <ClCompile Include="shader_program.cpp" />
+    <ClCompile Include="skeleton.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="texture.cpp" />
+    <ClCompile Include="tinyxml2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="aixlog.hpp" />
@@ -172,8 +174,10 @@
     <ClInclude Include="render_pass.h" />
     <ClInclude Include="shaders.hpp" />
     <ClInclude Include="shader_program.h" />
+    <ClInclude Include="skeleton.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="texture.h" />
+    <ClInclude Include="tinyxml2.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ambient_pass.frag" />
