@@ -3,11 +3,15 @@
 #include "buffer.h"
 #include "skeleton.h"
 
+#undef min
+#undef max
+#include <assimp/scene.h>
+
 struct Vertex {
 	float3 position, normal, tangent;
 	float2 texCoord;
-	// float2 jointWeights;
-	// uint2 jointIDs;
+	float jointWeights[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+	int32_t jointIDs[4]{ -1, -1, -1, -1 };
 };
 
 static BufferLayoutEntry VertexLayout[] = {
@@ -15,8 +19,8 @@ static BufferLayoutEntry VertexLayout[] = {
 	{ 3, DataType::Float, false },  // vNormal
 	{ 3, DataType::Float, false },  // vTangent
 	{ 2, DataType::Float, false },  // vTexCoord
-	//{ 2, DataType::Float, true },   // vWeights
-	//{ 2, DataType::UInt, false },   // vJointIDs
+	{ 4, DataType::Float, false },   // vWeights
+	{ 4, DataType::Int, false },   // vJointIDs
 };
 
 enum class PrimitiveType {
@@ -44,6 +48,8 @@ public:
 	Buffer& ibo() { return m_indexBuffer; }
 	uint32_t indexCount() const { return m_indexCount; }
 
+	Skeleton* skeleton() { return m_skeleton ? m_skeleton.get() : nullptr; }
+
 protected:
 	Buffer m_vertexBuffer{}, m_indexBuffer{};
 	VertexArray m_vertexArray{};
@@ -57,7 +63,6 @@ protected:
 		const std::vector<float3>& nrm,
 		const std::vector<float2>& uvs,
 		const std::vector<int3>& faces,
-		const std::vector<std::pair<float2, uint2>>& jointWeights,
 		std::vector<Vertex>& verts,
 		std::vector<uint32_t>& indices
 	);

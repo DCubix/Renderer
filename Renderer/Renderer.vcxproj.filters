@@ -164,6 +164,7 @@
     <None Include="shadow_instanced.glsl">
       <Filter>shaders</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="gamma_correct.frag">

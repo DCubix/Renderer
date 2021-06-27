@@ -5,14 +5,14 @@ layout (location = 1) in vec3 vNormal;
 layout (location = 2) in vec3 vTangent;
 layout (location = 3) in vec2 vTexCoord;
 
-//layout (location = 4) in vec2 vWeights;
-//layout (location = 5) in uvec2 vJointIDs;
+//layout (location = 4) in vec4 vWeights;
+//layout (location = 5) in uvec4 vJointIDs;
 
 // instances
-layout (location = 4) in mat4 iModel;
-layout (location = 8) in vec4 iTexCoordTransform;
-layout (location = 9) in vec4 iColor;
-layout (location = 10) in float iEmission;
+layout (location = 6) in mat4 iModel;
+layout (location = 10) in vec4 iTexCoordTransform;
+layout (location = 11) in vec4 iColor;
+layout (location = 12) in float iEmission;
 
 uniform mat4 uView;
 uniform mat4 uProjection;

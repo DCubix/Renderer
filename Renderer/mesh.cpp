@@ -9,6 +9,12 @@
 #include "tinyxml2.h"
 #include "parser_tools.hpp"
 
+#include "aixlog.hpp"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 using Filter = std::function<bool(char)>;
 
 bool whiteSpace(char c) {
@@ -113,144 +119,134 @@ void Mesh::load(const std::string& fileName) {
 
 		std::vector<Vertex> verts;
 		std::vector<uint32_t> inds;
-		process(pos, nrm, uvs, indices, std::vector<std::pair<float2, uint2>>(), verts, inds);
+		process(pos, nrm, uvs, indices, verts, inds);
 		create(verts.data(), verts.size(), inds.data(), inds.size());
 	}
 }
 
+aiNode* findMeshNode(aiNode* node) {
+	if (node->mNumMeshes > 0) return node;
+	for (size_t i = 0; i < node->mNumChildren; i++) {
+		aiNode* nd = findMeshNode(node->mChildren[i]);
+		if (nd != nullptr) return nd;
+	}
+	return nullptr;
+}
+
+aiNode* findBoneNode(aiNode* node) {
+	if (node->mNumMeshes == 0 && node->mParent != nullptr) return node;
+	for (size_t i = 0; i < node->mNumChildren; i++) {
+		aiNode* nd = findBoneNode(node->mChildren[i]);
+		if (nd != nullptr) return nd;
+	}
+	return nullptr;
+}
+
+void createBoneHierarchy(Skeleton* skel, aiNode* root, int parentID) {
+	int bid = skel->addJoint(std::string(root->mName.data), linalg::identity, parentID);
+	for (size_t i = 0; i < root->mNumChildren; i++) {
+		aiNode* nd = root->mChildren[i];
+		createBoneHierarchy(skel, nd, bid);
+	}
+}
+
 void Mesh::import(const std::string& fileName) {
-	std::vector<float2> uvs;
-	std::vector<float3> pos, nrm;
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(
+		fileName,
+		aiProcess_Triangulate |
+		aiProcess_FlipUVs |
+		aiProcess_CalcTangentSpace
+	);
 
-	std::vector<int3> indices;
-
-	using namespace tinyxml2;
-	XMLDocument doc;
-	doc.LoadFile(fileName.c_str());
-
-	auto root = doc.RootElement();
-	auto library_geometries = root->FirstChildElement("library_geometries");
-	auto skin = root->FirstChildElement("library_controllers")->FirstChildElement("controller")->FirstChildElement("skin");
-
-	for (auto geom = library_geometries->FirstChildElement("geometry");
-		 geom != nullptr;
-		 geom = geom->NextSiblingElement("geometry"))
-	{
-		for (auto mesh = geom->FirstChildElement("mesh");
-			 mesh != nullptr;
-			 mesh = mesh->NextSiblingElement("mesh"))
-		{
-			for (auto src = mesh->FirstChildElement("source");
-				 src != nullptr;
-				 src = src->NextSiblingElement("source"))
-			{
-				auto id = std::string(src->Attribute("id"));
-				auto data = src->FirstChildElement("float_array")->GetText();
-				Scanner scn{ data };
-				if (id.find("position") != std::string::npos) {
-					while (scn.hasNext()) {
-						float x = scn.scanFloat(); scn.cleanSpaces();
-						float y = scn.scanFloat(); scn.cleanSpaces();
-						float z = scn.scanFloat(); scn.cleanSpaces();
-						pos.push_back(float3{ x, y, z });
-					}
-				} else if (id.find("normal") != std::string::npos) {
-					while (scn.hasNext()) {
-						float x = scn.scanFloat(); scn.cleanSpaces();
-						float y = scn.scanFloat(); scn.cleanSpaces();
-						float z = scn.scanFloat(); scn.cleanSpaces();
-						nrm.push_back(float3{ x, y, z });
-					}
-				} else if (id.find("map") != std::string::npos) {
-					while (scn.hasNext()) {
-						float x = scn.scanFloat(); scn.cleanSpaces();
-						float y = scn.scanFloat(); scn.cleanSpaces();
-						uvs.push_back(float2{ x, y });
-					}
-				}
-			}
-
-			auto triangles = mesh->FirstChildElement("triangles");
-			std::map<size_t, size_t> order;
-			for (auto in = triangles->FirstChildElement("input");
-				 in != nullptr;
-				 in = in->NextSiblingElement("input"))
-			{
-				auto off = std::stoi(in->Attribute("offset"));
-				auto sem = std::string(in->Attribute("semantic"));
-				if (sem == "VERTEX") order[off] = 0;
-				else if (sem == "NORMAL") order[off] = 2;
-				else if (sem == "TEXCOORD") order[off] = 1;
-			}
-
-			auto data = triangles->FirstChildElement("p")->GetText();
-			Scanner scn{ data };
-			while (scn.hasNext()) {
-				int3 vtn{ -1, -1, -1 };
-				for (size_t k = 0; k < order.size(); k++) {
-					vtn[order[k]] = (size_t)scn.scanInt(); scn.cleanSpaces();
-				}
-				indices.push_back(vtn);
-			}
-		}
-	}
-	
-	// Oh boy let's do this
-	std::vector<std::string> boneNames;
-	std::vector<float> weights;
-
-	for (auto src = skin->FirstChildElement("source");
-		 src != nullptr;
-		 src = src->NextSiblingElement("source"))
-	{
-		auto id = std::string(src->Attribute("id"));
-		if (id.find("skin-joints") != std::string::npos) {
-			auto names = src->FirstChildElement("Name_array")->GetText();
-			Scanner scn{ names };
-			while (scn.hasNext()) {
-				auto name = scn.scanWhileMatch([](char c) { return !isspace(c); });
-				scn.cleanSpaces();
-				boneNames.push_back(name);
-			}
-		} else if (id.find("weights") != std::string::npos) {
-			auto data = src->FirstChildElement("float_array")->GetText();
-			Scanner scn{ data };
-			while (scn.hasNext()) {
-				float w = scn.scanFloat(); scn.cleanSpaces();
-				weights.push_back(w);
-			}
-		}
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+		LOG(ERROR) << "ERROR::ASSIMP::" << importer.GetErrorString() << "\n";
+		return;
 	}
 
-	auto vertex_weights = skin->FirstChildElement("vertex_weights");
-
-	// assuming it's joint->weight
-	auto vcount = vertex_weights->FirstChildElement("vcount")->GetText();
-	auto v = vertex_weights->FirstChildElement("v")->GetText();
-
-	Scanner vcountScn{ vcount };
-	Scanner vScn{ v };
-
-	std::vector<std::pair<float2, uint2>> jointWeights;
-	while (vcountScn.hasNext()) {
-		int count = vcountScn.scanInt(); vcountScn.cleanSpaces();
-		float2 ws{ 0.0f };
-		uint2 ids{ 0u };
-		for (int i = 0; i < count; i++) {
-			int jointID = vScn.scanInt(); vScn.cleanSpaces();
-			int weightID = vScn.scanInt(); vScn.cleanSpaces();
-			if (i < 2) {
-				ws[i] = weights[weightID];
-				ids[i] = jointID;
-			}
-		}
-		jointWeights.push_back({ ws, ids });
-	}
+	m_skeleton = std::make_unique<Skeleton>();
 
 	std::vector<Vertex> verts;
 	std::vector<uint32_t> inds;
-	process(pos, nrm, uvs, indices, jointWeights, verts, inds);
+	std::map<size_t, std::vector<std::pair<int, float>>> weights;
+
+	aiNode* node = findMeshNode(scene->mRootNode);
+	aiMatrix4x4 invXform = scene->mRootNode->mTransformation.Inverse();
+	aiNode* skel = findBoneNode(node->mParent);
+	createBoneHierarchy(m_skeleton.get(), skel, -1);
+
+	aiMesh* mesh = scene->mMeshes[node->mMeshes[0]]; // load one mesh for now
+	for (size_t j = 0; j < mesh->mNumVertices; j++) {
+		Vertex vert{};
+
+		aiVector3D pos = mesh->mVertices[j];
+		aiVector3D nrm = mesh->mNormals[j];
+		aiVector3D tgt = mesh->mTangents[j];
+		vert.position = float3{ pos.x, pos.y, pos.z };
+		vert.normal = float3{ nrm.x, nrm.y, nrm.z };
+		vert.tangent = float3{ tgt.x, tgt.y, tgt.z };
+
+		if (mesh->mTextureCoords[0]) {
+			aiVector3D uv = mesh->mTextureCoords[0][j];
+			vert.texCoord = float2{ uv.x, uv.y };
+		} else {
+			vert.texCoord = float2{ 0.0f };
+		}
+
+		verts.push_back(vert);
+	}
+
+	for (size_t j = 0; j < mesh->mNumFaces; j++) {
+		aiFace face = mesh->mFaces[j];
+		for (size_t f = 0; f < face.mNumIndices; f++)
+			inds.push_back(face.mIndices[f]);
+	}
+
+	
+	for (size_t j = 0; j < mesh->mNumBones; j++) {
+		aiBone* bone = mesh->mBones[j];
+		aiMatrix4x4 off = bone->mOffsetMatrix;
+
+		float4x4 mat = float4x4{
+			float4{ off.a1, off.b1, off.c1, off.d1 },
+			float4{ off.a2, off.b2, off.c2, off.d2 },
+			float4{ off.a3, off.b3, off.c3, off.d3 },
+			float4{ off.a4, off.b4, off.c4, off.d4 }
+		};
+
+		auto name = std::string(bone->mName.data);
+		auto& joint = m_skeleton->getJoint(name);
+		joint.offset = mat;
+
+		joint.correctionMatrix = float4x4{
+			float4{ invXform.a1, invXform.b1, invXform.c1, invXform.d1 },
+			float4{ invXform.a2, invXform.b2, invXform.c2, invXform.d2 },
+			float4{ invXform.a3, invXform.b3, invXform.c3, invXform.d3 },
+			float4{ invXform.a4, invXform.b4, invXform.c4, invXform.d4 }
+		};
+
+		for (size_t k = 0; k < bone->mNumWeights; k++) {
+			aiVertexWeight vw = bone->mWeights[k];
+			weights[vw.mVertexId].push_back({ m_skeleton->getJointID(name), vw.mWeight });
+		}
+	}
+
+	for (uint32_t i : inds) {
+		Vertex& v = verts[i];
+		auto ws = weights[i];
+
+		size_t j = 0;
+		for (auto [boneID, weight] : ws) {
+			if (j >= 4) break;
+			v.jointIDs[j] = boneID;
+			v.jointWeights[j] = weight;
+			j++;
+		}
+	}
+
+	//process(pos, nrm, uvs, indices, jointWeights, verts, inds);
 	create(verts.data(), verts.size(), inds.data(), inds.size());
+
 }
 
 void Mesh::create(Vertex* vertices, size_t count, uint32_t* indices, size_t icount) {
@@ -258,7 +254,7 @@ void Mesh::create(Vertex* vertices, size_t count, uint32_t* indices, size_t icou
 	m_vertexArray.bind();
 
 	m_vertexBuffer.create(BufferType::ArrayBuffer, BufferUsage::DynamicDraw);
-	m_vertexBuffer.setLayout(VertexLayout, 4, sizeof(Vertex));
+	m_vertexBuffer.setLayout(VertexLayout, 6, sizeof(Vertex));
 	m_vertexBuffer.update(vertices, count);
 
 	m_indexBuffer.create(BufferType::ElementBuffer, BufferUsage::DynamicDraw);
@@ -279,21 +275,12 @@ void Mesh::process(
 	const std::vector<float3>& nrm,
 	const std::vector<float2>& uvs,
 	const std::vector<int3>& faces,
-	const std::vector<std::pair<float2, uint2>>& jointWeights,
 	std::vector<Vertex>& verts, std::vector<uint32_t>& indices)
 {
 	// Now process all the data...
 	uint32_t idx = 0;
 	for (int3 i : faces) {
-		Vertex vert;
-		/*if (!jointWeights.empty()) {
-			auto [jw, jid] = jointWeights[i[0]];
-			vert.jointWeights = jw;
-			vert.jointIDs = jid;
-		} else {
-			vert.jointWeights = float2{ 0.0f };
-		}*/
-
+		Vertex vert{};
 		indices.push_back(idx++);
 
 		vert.tangent = float3{ 0.0f };

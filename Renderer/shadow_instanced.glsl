@@ -3,7 +3,7 @@ R""(
 vertex_shader {
 	#version 330 core
 	layout (location = 0) in vec3 vPosition;
-	layout (location = 4) in mat4 iModel;
+	layout (location = 6) in mat4 iModel;
 
 	uniform mat4 uView;
 	uniform mat4 uProjection;

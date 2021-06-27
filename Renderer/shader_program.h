@@ -59,19 +59,22 @@ public:
 
 	template <typename T>
 	void uniformBuffer(const std::string& name, T data, uint32_t index = 0) {
-		if (m_uniformBuffers.find(name) == m_uniformBuffers.end()) {
-			uint32_t ubi = glGetUniformBlockIndex(m_program, name.c_str());
-			Buffer buf = Buffer();
-			buf.create(BufferType::UniformBuffer, BufferUsage::DynamicDraw, sizeof(T));
-			
-			glUniformBlockBinding(m_program, ubi, index);
-			glBindBufferBase(GL_UNIFORM_BUFFER, index, buf.object());
-
-			m_uniformBuffers[name] = buf;
-		}
-		T* bdata = m_uniformBuffers[name].map<T>();
+		auto& buf = uniformBufferCreate<T>(name, index);
+		T* bdata = buf.map<T>();
 		::memcpy(bdata, &data, sizeof(T));
-		m_uniformBuffers[name].unmap();
+		buf.unmap();
+	}
+
+	template <typename T>
+	void uniformBufferArray(const std::string& name, T* data, size_t count, uint32_t index = 0) {
+		auto& buf = uniformBufferCreateArray<T>(name, count, index);
+		T* bdata = buf.map<T>(0, sizeof(T) * count);
+		::memcpy(bdata, data, sizeof(T) * count);
+		buf.unmap();
+	}
+
+	GLuint program() const {
+		return m_program;
 	}
 
 private:
@@ -84,5 +87,34 @@ private:
 
 	GLuint createShader(const std::string& source, GLenum type);
 
-};
+	template <typename T>
+	Buffer& uniformBufferCreate(const std::string& name, uint32_t index = 0) {
+		if (m_uniformBuffers.find(name) == m_uniformBuffers.end()) {
+			uint32_t ubi = glGetUniformBlockIndex(m_program, name.c_str());
+			Buffer buf = Buffer();
+			buf.create(BufferType::UniformBuffer, BufferUsage::StreamDraw, sizeof(T));
 
+			glUniformBlockBinding(m_program, ubi, index);
+			glBindBufferBase(GL_UNIFORM_BUFFER, index, buf.object());
+
+			m_uniformBuffers[name] = buf;
+		}
+		return m_uniformBuffers[name];
+	}
+
+	template <typename T>
+	Buffer& uniformBufferCreateArray(const std::string& name, size_t count, uint32_t index = 0) {
+		if (m_uniformBuffers.find(name) == m_uniformBuffers.end()) {
+			uint32_t ubi = glGetUniformBlockIndex(m_program, name.c_str());
+			Buffer buf = Buffer();
+			buf.create(BufferType::UniformBuffer, BufferUsage::StreamDraw, sizeof(T) * count);
+
+			glUniformBlockBinding(m_program, ubi, index);
+			glBindBufferBase(GL_UNIFORM_BUFFER, index, buf.object());
+
+			m_uniformBuffers[name] = buf;
+		}
+		return m_uniformBuffers[name];
+	}
+
+};

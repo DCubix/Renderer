@@ -78,20 +78,19 @@ void Renderer::drawInstanced(Mesh* mesh, Instance* instances, size_t count, Mate
 	if (!mesh->m_hasInstanceBuffer) {
 		mesh->vao().bind();
 		m_instanceBuffer.bind();
-		m_instanceBuffer.setLayout(InstanceLayout, 7, sizeof(Instance), 4);
-		m_instanceBuffer.attributeDivisor(4, 1);
-		m_instanceBuffer.attributeDivisor(5, 1);
+		m_instanceBuffer.setLayout(InstanceLayout, 7, sizeof(Instance), 6);
 		m_instanceBuffer.attributeDivisor(6, 1);
 		m_instanceBuffer.attributeDivisor(7, 1);
 		m_instanceBuffer.attributeDivisor(8, 1);
 		m_instanceBuffer.attributeDivisor(9, 1);
 		m_instanceBuffer.attributeDivisor(10, 1);
-
-		m_instanceBuffer.update(instances, count);
+		m_instanceBuffer.attributeDivisor(11, 1);
+		m_instanceBuffer.attributeDivisor(12, 1);
 
 		mesh->vao().unbind();
 		mesh->m_hasInstanceBuffer = true;
 	}
+	m_instanceBuffer.update(instances, count);
 
 	RenderCommand cmd{};
 	cmd.type = RenderCommand::Type::Instanced;
@@ -131,9 +130,24 @@ void Renderer::setCamera(float4x4 view, float4x4 projection) {
 	m_projection = projection;
 }
 
-void setShaderParams(Material& mat, ShaderProgram& sp, PassParameters params) {
+void setShaderParams(Material& mat, Skeleton* skel, ShaderProgram& sp, PassParameters params) {
 	sp["uView"](params.view);
 	sp["uProjection"](params.projection);
+
+	if (skel != nullptr) {
+		float4x4 mats[MaxJoints];
+		for (size_t id = 0; id < MaxJoints; id++) {
+			mats[id] = linalg::identity;
+		}
+
+		for (size_t id = 0; id < skel->jointCount(); id++) {
+			auto& joint = skel->getJoint(id);
+			mats[id] = skel->jointTransform(id);
+				//linalg::mul(joint.correctionMatrix, linalg::mul(skel->jointTransform(id), joint.offset));
+		}
+
+		sp.uniformBufferArray("Bones", &mats[0], MaxJoints, 5);
+	}
 
 	MaterialParameters mp{};
 	mp.shininess = mat.shininess;
@@ -180,7 +194,7 @@ void Renderer::renderGeometry(PassParameters params) {
 				m_gbufferShader.bind();
 				m_gbufferShader["uModel"](cmd.single.model);
 
-				setShaderParams(cmd.material, m_gbufferShader, params);
+				setShaderParams(cmd.material, cmd.mesh->skeleton(), m_gbufferShader, params);
 
 				cmd.mesh->vao().bind();
 				glDrawElements(GL_TRIANGLES, cmd.mesh->indexCount(), GL_UNSIGNED_INT, nullptr);
@@ -188,7 +202,9 @@ void Renderer::renderGeometry(PassParameters params) {
 			case RenderCommand::Type::Instanced:
 			{
 				m_gbufferInstancedShader.bind();
-				setShaderParams(cmd.material, m_gbufferInstancedShader, params);
+
+				// TODO: Skeletal animation for instanced objects... ooof
+				setShaderParams(cmd.material, nullptr, m_gbufferInstancedShader, params);
 
 				cmd.mesh->vao().bind();
 				glDrawElementsInstanced(

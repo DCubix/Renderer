@@ -53,6 +53,7 @@ public:
 	template <typename T>
 	T* map(size_t offset = 0, size_t length = 0) {
 		length = length == 0 ? sizeof(T) : length;
+		bind();
 		return (T*)glMapBufferRange((GLenum)m_type, offset, length, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
 	}
 	void unmap() { glUnmapBuffer((GLenum)m_type); }

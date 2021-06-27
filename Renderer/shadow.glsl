@@ -3,8 +3,8 @@ R""(
 vertex_shader {
 	#version 330 core
 	layout (location = 0) in vec3 vPosition;
-	//layout (location = 4) in vec2 vWeights;
-	//layout (location = 5) in uvec2 vJointIDs;
+	layout (location = 4) in vec4 vWeights;
+	layout (location = 5) in uvec4 vJointIDs;
 
 	uniform mat4 uModel;
 	uniform mat4 uView;

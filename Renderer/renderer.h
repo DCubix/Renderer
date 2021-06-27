@@ -14,6 +14,8 @@
 
 #include "render_pass.h"
 
+constexpr size_t MaxJoints = 64;
+
 struct Instance {
 	float4x4 model{ linalg::identity };
 	float4 texCoordTransform{ 0.0f, 0.0f, 1.0f, 1.0f };
