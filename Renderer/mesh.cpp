@@ -142,8 +142,21 @@ aiNode* findBoneNode(aiNode* node) {
 	return nullptr;
 }
 
+float4x4 convertMat(aiMatrix4x4 m) {
+	return linalg::transpose(float4x4{
+		float4{ m.a1, m.a2, m.a3, m.a4 },
+		float4{ m.b1, m.b2, m.b3, m.b4 },
+		float4{ m.c1, m.c2, m.c3, m.c4 },
+		float4{ m.d1, m.d2, m.d3, m.d4 }
+	});
+}
+
 void createBoneHierarchy(Skeleton* skel, aiNode* root, int parentID) {
 	int bid = skel->addJoint(std::string(root->mName.data), linalg::identity, parentID);
+	auto& joint = skel->getJoint(bid);
+
+	joint.transform = convertMat(root->mTransformation);
+
 	for (size_t i = 0; i < root->mNumChildren; i++) {
 		aiNode* nd = root->mChildren[i];
 		createBoneHierarchy(skel, nd, bid);
@@ -171,7 +184,7 @@ void Mesh::import(const std::string& fileName) {
 	std::map<size_t, std::vector<std::pair<int, float>>> weights;
 
 	aiNode* node = findMeshNode(scene->mRootNode);
-	aiMatrix4x4 invXform = scene->mRootNode->mTransformation.Inverse();
+	aiMatrix4x4 invXform = scene->mRootNode->mTransformation;
 	aiNode* skel = findBoneNode(node->mParent);
 	createBoneHierarchy(m_skeleton.get(), skel, -1);
 
@@ -207,23 +220,10 @@ void Mesh::import(const std::string& fileName) {
 		aiBone* bone = mesh->mBones[j];
 		aiMatrix4x4 off = bone->mOffsetMatrix;
 
-		float4x4 mat = float4x4{
-			float4{ off.a1, off.b1, off.c1, off.d1 },
-			float4{ off.a2, off.b2, off.c2, off.d2 },
-			float4{ off.a3, off.b3, off.c3, off.d3 },
-			float4{ off.a4, off.b4, off.c4, off.d4 }
-		};
-
 		auto name = std::string(bone->mName.data);
 		auto& joint = m_skeleton->getJoint(name);
-		joint.offset = mat;
-
-		joint.correctionMatrix = float4x4{
-			float4{ invXform.a1, invXform.b1, invXform.c1, invXform.d1 },
-			float4{ invXform.a2, invXform.b2, invXform.c2, invXform.d2 },
-			float4{ invXform.a3, invXform.b3, invXform.c3, invXform.d3 },
-			float4{ invXform.a4, invXform.b4, invXform.c4, invXform.d4 }
-		};
+		joint.offset = convertMat(off);
+		joint.correctionMatrix = convertMat(invXform);
 
 		for (size_t k = 0; k < bone->mNumWeights; k++) {
 			aiVertexWeight vw = bone->mWeights[k];

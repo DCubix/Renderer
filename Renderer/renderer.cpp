@@ -147,6 +147,9 @@ void setShaderParams(Material& mat, Skeleton* skel, ShaderProgram& sp, PassParam
 		}
 
 		sp.uniformBufferArray("Bones", &mats[0], MaxJoints, 5);
+		sp["uHasBones"](true);
+	} else {
+		sp["uHasBones"](false);
 	}
 
 	MaterialParameters mp{};

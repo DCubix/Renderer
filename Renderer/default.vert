@@ -11,6 +11,7 @@ layout (location = 5) in ivec4 vJointIDs;
 layout (std140) uniform Bones {
 	mat4 transform[64];
 } uBones;
+uniform bool uHasBones = false;
 
 uniform mat4 uModel;
 uniform mat4 uView;
@@ -28,22 +29,32 @@ out DATA {
 } VS;
 
 void main() {
-	vec4 pos = vec4(vPosition, 1.0);
-    vec4 nrm = vec4(vNormal, 0.0);
-	vec4 tgt = vec4(vTangent, 0.0);
+	vec4 posSkinned = vec4(0.0);
+    vec4 nrmSkinned = vec4(0.0);
+	vec4 tgtSkinned = vec4(0.0);
 
-	int appliedCount = 0;
-	mat4 boneTransform = mat4(0.0);
-	for (int i = 0; i < 4; i++) {
-		float w = vWeights[i];
-		if (w * float(vJointIDs[i]) < 0.0) continue;
-		boneTransform += uBones.transform[vJointIDs[i]] * w;
-		appliedCount++;
+	if (uHasBones) {
+		for (int i = 0; i < 4; i++) {
+			float w = vWeights[i];
+			int id = vJointIDs[i];
+			if (id < 0 || w <= 0.0) continue;
+
+			mat4 bone = uBones.transform[id];
+
+			vec4 pos = bone * vec4(vPosition, 1.0);
+			posSkinned += pos * w;
+			
+			vec4 nrm = bone * vec4(vNormal, 0.0);
+			nrmSkinned += nrm * w;
+
+			vec4 tgt = bone * vec4(vTangent, 0.0);
+			tgtSkinned += tgt * w;
+		}
+	} else {
+		posSkinned = vec4(vPosition, 1.0);
+		nrmSkinned = vec4(vNormal, 0.0);
+		tgtSkinned = vec4(vTangent, 0.0);
 	}
-
-	vec4 posSkinned = appliedCount == 0 ? pos : boneTransform * pos;
-    vec4 nrmSkinned = appliedCount == 0 ? nrm : boneTransform * nrm;
-	vec4 tgtSkinned = appliedCount == 0 ? tgt : boneTransform * tgt;
 	
 	vec4 fpos = uModel * posSkinned;
 	gl_Position = uProjection * uView * fpos;
